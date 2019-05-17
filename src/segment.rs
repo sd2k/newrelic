@@ -252,6 +252,12 @@ impl<'a> Segment<'a> {
     }
 }
 
+impl<'a> Default for Segment<'a> {
+    fn default() -> Self {
+        Segment { inner: None }
+    }
+}
+
 impl<'a> Drop for Segment<'a> {
     fn drop(&mut self) {
         if let Some(ref mut inner) = self.inner {
