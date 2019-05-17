@@ -66,7 +66,7 @@ impl<'a> Segment<'a> {
         Segment { inner }
     }
 
-    pub(crate) fn datastore(transaction: &'a Transaction, params: DatastoreParams) -> Self {
+    pub(crate) fn datastore(transaction: &'a Transaction, params: &DatastoreParams) -> Self {
         let inner_ptr =
             unsafe { ffi::newrelic_start_datastore_segment(transaction.inner, &params.as_ptr()) };
         let inner = if inner_ptr.is_null() {
@@ -82,7 +82,7 @@ impl<'a> Segment<'a> {
         Segment { inner }
     }
 
-    pub(crate) fn external(transaction: &'a Transaction, params: ExternalParams) -> Self {
+    pub(crate) fn external(transaction: &'a Transaction, params: &ExternalParams) -> Self {
         debug!("Trying to start external segment");
         let inner_ptr =
             unsafe { ffi::newrelic_start_external_segment(transaction.inner, &params.as_ptr()) };
@@ -173,7 +173,7 @@ impl<'a> Segment<'a> {
     ///         .operation("select")
     ///         .build()
     ///         .expect("Invalid datastore segment parameters");
-    ///     let expensive_val = s.datastore_nested(datastore_segment_params, |_| {
+    ///     let expensive_val = s.datastore_nested(&datastore_segment_params, |_| {
     ///         thread::sleep(Duration::from_secs(1));
     ///         3
     ///     });
@@ -181,7 +181,7 @@ impl<'a> Segment<'a> {
     /// });
     /// # }
     /// ```
-    pub fn datastore_nested<F, V>(&self, params: DatastoreParams, func: F) -> V
+    pub fn datastore_nested<F, V>(&self, params: &DatastoreParams, func: F) -> V
     where
         F: FnOnce(Segment) -> V,
     {
@@ -223,7 +223,7 @@ impl<'a> Segment<'a> {
     ///         .library("reqwest")
     ///         .build()
     ///         .expect("Invalid external segment parameters");
-    ///     let expensive_val = s.external_nested(external_segment_params, |_| {
+    ///     let expensive_val = s.external_nested(&external_segment_params, |_| {
     ///         thread::sleep(Duration::from_secs(1));
     ///         3
     ///     });
@@ -231,7 +231,7 @@ impl<'a> Segment<'a> {
     /// });
     /// # }
     /// ```
-    pub fn external_nested<F, V>(&self, params: ExternalParams, func: F) -> V
+    pub fn external_nested<F, V>(&self, params: &ExternalParams, func: F) -> V
     where
         F: FnOnce(Segment) -> V,
     {

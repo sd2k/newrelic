@@ -157,12 +157,12 @@ impl Transaction {
     ///     .operation("select")
     ///     .build()
     ///     .expect("Invalid datastore segment parameters");
-    /// transaction.datastore_segment(segment_params, |_| {
+    /// transaction.datastore_segment(&segment_params, |_| {
     ///     thread::sleep(Duration::from_secs(1))
     /// });
     /// # }
     /// ```
-    pub fn datastore_segment<F, V>(&self, params: DatastoreParams, func: F) -> V
+    pub fn datastore_segment<F, V>(&self, params: &DatastoreParams, func: F) -> V
     where
         F: FnOnce(Segment) -> V,
     {
@@ -190,12 +190,12 @@ impl Transaction {
     ///     .library("reqwest")
     ///     .build()
     ///     .expect("Invalid external segment parameters");
-    /// transaction.external_segment(segment_params, |_| {
+    /// transaction.external_segment(&segment_params, |_| {
     ///     thread::sleep(Duration::from_secs(1))
     /// });
     /// # }
     /// ```
-    pub fn external_segment<F, V>(&self, params: ExternalParams, func: F) -> V
+    pub fn external_segment<F, V>(&self, params: &ExternalParams, func: F) -> V
     where
         F: FnOnce(Segment) -> V,
     {

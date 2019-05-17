@@ -16,7 +16,7 @@ fn main() {
         .operation("select")
         .build()
         .expect("Invalid datastore segment parameters");
-    let value = transaction.datastore_segment(segment_params, |_| {
+    let value = transaction.datastore_segment(&segment_params, |_| {
         // Interesting application code happens here
         thread::sleep(Duration::from_secs(5));
         5
