@@ -158,7 +158,7 @@ impl<'a> LogOutput<'a> {
     }
 }
 
-/// Configuration used to connect to the New Relic daemon.
+/// Custom configuration used to connect to the New Relic daemon.
 ///
 /// This only needs to be used if the New Relic daemon is
 /// running at a non-default location, or a different timeout is desired
@@ -281,6 +281,11 @@ impl<'a> NewRelicConfig<'a> {
         self
     }
 
+    /// Initialise the New Relic SDK.
+    ///
+    /// If non-default settings are to be used, this must be called
+    /// before the first `App` is created.
+    ///
     /// Example:
     ///
     /// ```rust
