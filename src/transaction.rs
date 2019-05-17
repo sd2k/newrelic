@@ -282,3 +282,6 @@ impl Drop for Transaction {
         debug!("Ended transaction");
     }
 }
+
+unsafe impl Send for Transaction {}
+unsafe impl Sync for Transaction {}
