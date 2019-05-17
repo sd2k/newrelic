@@ -33,10 +33,17 @@ pub enum Attribute<'a> {
     OwnedString(&'a String),
 }
 
+#[derive(PartialEq)]
+enum State {
+    Running,
+    Ended,
+}
+
 /// A transaction monitored by New Relic.
 pub struct Transaction {
     pub(crate) inner: *mut ffi::newrelic_txn_t,
     _type: TransactionType,
+    state: State,
 }
 
 impl Transaction {
@@ -51,6 +58,7 @@ impl Transaction {
             Ok(Transaction {
                 inner,
                 _type: TransactionType::Web,
+                state: State::Running,
             })
         }
     }
@@ -66,6 +74,7 @@ impl Transaction {
             Ok(Transaction {
                 inner,
                 _type: TransactionType::NonWeb,
+                state: State::Running,
             })
         }
     }
@@ -272,14 +281,28 @@ impl Transaction {
     pub fn custom_event(&self, event_type: &str) -> Result<CustomEvent> {
         CustomEvent::new(self, event_type)
     }
+
+    /// Explicitly end this transaction.
+    ///
+    /// If this is not called, the transaction is automatically ended
+    /// when dropped.
+    pub fn end(&mut self) {
+        match self.state {
+            State::Running => {
+                unsafe {
+                    ffi::newrelic_end_transaction(&mut self.inner);
+                }
+                debug!("Ended transaction");
+                self.state = State::Ended;
+            }
+            _ => {}
+        }
+    }
 }
 
 impl Drop for Transaction {
     fn drop(&mut self) {
-        unsafe {
-            ffi::newrelic_end_transaction(&mut self.inner);
-        }
-        debug!("Ended transaction");
+        self.end();
     }
 }
 
