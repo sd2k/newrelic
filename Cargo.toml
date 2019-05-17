@@ -1,0 +1,17 @@
+[package]
+name = "newrelic"
+repository = "https://github.com/yougov/new-relic-rust"
+version = "0.1.0"
+authors = ["Ben Sully <ben.sully@yougov.com>"]
+edition = "2018"
+
+[dependencies]
+log = "*"
+newrelic-sys = { path = "../newrelic-sys" }
+
+[dev-dependencies]
+env_logger = "*"
+
+[badges]
+travis-ci = { repository = "yougov/new-relic-rust", branch = "master" }
+maintenance = { status = "passively-maintained" }
