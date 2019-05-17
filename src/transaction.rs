@@ -19,6 +19,7 @@ pub enum TransactionType {
 }
 
 /// An attribute to add to a transaction.
+#[derive(Debug, From)]
 pub enum Attribute<'a> {
     /// A short (i32) integer attribute.
     Int(i32),
@@ -28,6 +29,8 @@ pub enum Attribute<'a> {
     Float(f64),
     /// A string attribute.
     String(&'a str),
+    /// An owned string attribute.
+    OwnedString(&'a String),
 }
 
 /// A transaction monitored by New Relic.
@@ -75,20 +78,27 @@ impl Transaction {
     /// Add an attribute to the transaction.
     ///
     /// Returns an error if the New Relic SDK returns an error.
-    pub fn add_attribute(&self, name: &str, attribute: &Attribute) -> Result<()> {
+    pub fn add_attribute<'a, T>(&self, name: &str, attribute: T) -> Result<()>
+    where
+        T: Into<Attribute<'a>>,
+    {
         let name = CString::new(name)?;
-        let ok = match attribute {
+        let ok = match attribute.into() {
             Attribute::Int(i) => unsafe {
-                ffi::newrelic_add_attribute_int(self.inner, name.as_ptr(), *i)
+                ffi::newrelic_add_attribute_int(self.inner, name.as_ptr(), i)
             },
             Attribute::Float(f) => unsafe {
-                ffi::newrelic_add_attribute_double(self.inner, name.as_ptr(), *f)
+                ffi::newrelic_add_attribute_double(self.inner, name.as_ptr(), f)
             },
             Attribute::Long(l) => unsafe {
-                ffi::newrelic_add_attribute_long(self.inner, name.as_ptr(), *l)
+                ffi::newrelic_add_attribute_long(self.inner, name.as_ptr(), l)
             },
             Attribute::String(s) => {
-                let s = CString::new(*s)?;
+                let s = CString::new(s)?;
+                unsafe { ffi::newrelic_add_attribute_string(self.inner, name.as_ptr(), s.as_ptr()) }
+            }
+            Attribute::OwnedString(s) => {
+                let s = CString::new(s.as_str())?;
                 unsafe { ffi::newrelic_add_attribute_string(self.inner, name.as_ptr(), s.as_ptr()) }
             }
         };
@@ -245,7 +255,7 @@ impl Transaction {
     /// ```rust
     /// use std::{thread, time::Duration};
     ///
-    /// use newrelic::{App, Attribute};
+    /// use newrelic::App;
     ///
     /// # if false {
     /// let app = App::new("Test app", "Test license key")
@@ -255,7 +265,7 @@ impl Transaction {
     ///     .expect("Could not start transaction");
     /// let custom_event = transaction.custom_event("My event")
     ///     .expect("Could not create custom event");
-    /// custom_event.add_attribute("number of foos", &Attribute::Int(1_000));
+    /// custom_event.add_attribute("number of foos", 1_000);
     /// custom_event.record();
     /// # }
     /// ```

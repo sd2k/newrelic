@@ -2,6 +2,9 @@
 */
 #![deny(missing_docs)]
 
+#[macro_use]
+extern crate derive_more;
+
 mod app;
 mod error;
 mod event;

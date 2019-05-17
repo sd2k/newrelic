@@ -29,20 +29,33 @@ impl<'a> CustomEvent<'a> {
     }
 
     /// Add an attribute to this custom event.
-    pub fn add_attribute(&self, name: &str, attribute: &Attribute) -> Result<&Self> {
+    pub fn add_attribute<'b, T>(&self, name: &str, attribute: T) -> Result<&Self>
+    where
+        T: Into<Attribute<'b>>,
+    {
         let name = CString::new(name)?;
-        let ok = match attribute {
+        let ok = match attribute.into() {
             Attribute::Int(i) => unsafe {
-                ffi::newrelic_custom_event_add_attribute_int(self.inner, name.as_ptr(), *i)
+                ffi::newrelic_custom_event_add_attribute_int(self.inner, name.as_ptr(), i)
             },
             Attribute::Float(f) => unsafe {
-                ffi::newrelic_custom_event_add_attribute_double(self.inner, name.as_ptr(), *f)
+                ffi::newrelic_custom_event_add_attribute_double(self.inner, name.as_ptr(), f)
             },
             Attribute::Long(l) => unsafe {
-                ffi::newrelic_custom_event_add_attribute_long(self.inner, name.as_ptr(), *l)
+                ffi::newrelic_custom_event_add_attribute_long(self.inner, name.as_ptr(), l)
             },
             Attribute::String(s) => {
-                let s = CString::new(*s)?;
+                let s = CString::new(s)?;
+                unsafe {
+                    ffi::newrelic_custom_event_add_attribute_string(
+                        self.inner,
+                        name.as_ptr(),
+                        s.as_ptr(),
+                    )
+                }
+            }
+            Attribute::OwnedString(s) => {
+                let s = CString::new(s.as_str())?;
                 unsafe {
                     ffi::newrelic_custom_event_add_attribute_string(
                         self.inner,

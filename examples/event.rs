@@ -1,6 +1,6 @@
 use std::{env, thread, time::Duration};
 
-use newrelic::{App, Attribute};
+use newrelic::App;
 
 fn main() {
     let license_key =
@@ -15,7 +15,7 @@ fn main() {
         .custom_event("Event name or type")
         .expect("Could not create custom event");
     event
-        .add_attribute("number of foos", &Attribute::Int(1_000))
+        .add_attribute("number of foos", 1_000)
         .expect("Could not add attribute");
     event.record();
     thread::sleep(Duration::from_secs(1));
