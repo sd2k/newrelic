@@ -269,9 +269,11 @@ impl<'a> NewRelicConfig<'a> {
     ///
     /// use newrelic::{NewRelicConfig, LogLevel, LogOutput};
     ///
+    /// # if false {
     /// NewRelicConfig::default()
     ///     .logging(LogLevel::Debug, LogOutput::File(Path::new("test.txt")))
     ///     .init();
+    /// # }
     /// ```
     pub fn logging(mut self, level: log::Level, output: LogOutput<'a>) -> Self {
         self.log_output = Some(output);
@@ -285,9 +287,11 @@ impl<'a> NewRelicConfig<'a> {
     /// use std::path::Path;
     /// use newrelic::{NewRelicConfig, LogLevel, LogOutput};
     ///
+    /// # if false {
     /// NewRelicConfig::default()
     ///     .logging(LogLevel::Info, LogOutput::File(Path::new("test.txt")))
     ///     .init();
+    /// # }
     /// ```
     pub fn init(self) -> Result<()> {
         if let Some(log_output) = self.log_output {
