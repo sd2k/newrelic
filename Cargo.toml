@@ -10,9 +10,6 @@ derive_more = "*"
 log = "*"
 newrelic-sys = { git = "https://github.com/sd2k/newrelic-sys" }
 
-[dev-dependencies]
-env_logger = "*"
-
 [badges]
 travis-ci = { repository = "yougov/new-relic-rust", branch = "master" }
 maintenance = { status = "passively-maintained" }
