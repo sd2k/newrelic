@@ -77,5 +77,7 @@ impl fmt::Display for Error {
     }
 }
 
+impl std::error::Error for Error {}
+
 /// A Result used by the New Relic library.
 pub type Result<T> = std::result::Result<T, Error>;
