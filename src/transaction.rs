@@ -287,15 +287,12 @@ impl Transaction {
     /// If this is not called, the transaction is automatically ended
     /// when dropped.
     pub fn end(&mut self) {
-        match self.state {
-            State::Running => {
-                unsafe {
-                    ffi::newrelic_end_transaction(&mut self.inner);
-                }
-                debug!("Ended transaction");
-                self.state = State::Ended;
+        if let State::Running = self.state {
+            unsafe {
+                ffi::newrelic_end_transaction(&mut self.inner);
             }
-            _ => {}
+            debug!("Ended transaction");
+            self.state = State::Ended;
         }
     }
 }
