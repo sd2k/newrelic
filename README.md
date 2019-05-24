@@ -1,11 +1,20 @@
 New Relic SDK
 =============
 
-[![Build Status](https://travis-ci.org/yougov/new-relic-rust.svg?branch=master)](https://travis-ci.org/yougov/new-relic-rust)
-[![docs.rs](https://docs.rs/new-relic/badge.svg)](https://docs.rs/new-relic)
-[![crates.io](https://img.shields.io/crates/v/new-relic.svg)](https://crates.io/crates/new-relic)
+[![docs.rs](https://docs.rs/newrelic/badge.svg)](https://docs.rs/newrelic)
+[![crates.io](https://img.shields.io/crates/v/newrelic.svg)](https://crates.io/crates/newrelic)
 
-A Rust wrapper around the New Relic C SDK.
+An idiomatic Rust wrapper around the New Relic C SDK.
+
+Note: versions 0.1.0 onwards of this crate are completely incompatible
+with previous versions as they move away from the deprecated New Relic SDK
+to the newer New Relic C SDK. This has additional requirements: see
+https://docs.newrelic.com/docs/agents/c-sdk/get-started/introduction-c-sdk
+for details.
+
+In particular, the New Relic SDK will not link against musl - see the [newrelic-sys] crate for more details.
+
+See https://github.com/hjr3/newrelic-rs for the <0.1.0 repository.
 
 Usage
 -----
@@ -92,3 +101,4 @@ fn main() {
 ```
 
 [c-sdk]: https://docs.newrelic.com/docs/agents/c-sdk/get-started/introduction-c-sdk#architecture
+[newrelic-sys]: https://crates.io/crates/newrelic-sys

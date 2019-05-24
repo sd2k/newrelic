@@ -2,6 +2,12 @@
 name = "newrelic"
 description = """
 Idiomatic Rust bindings to the New Relic C SDK.
+
+Note: versions 0.1.0 onwards of this crate are completely incompatible
+with previous versions as they move away from the deprecated New Relic SDK
+to the newer New Relic C SDK. This has additional requirements: see
+https://docs.newrelic.com/docs/agents/c-sdk/get-started/introduction-c-sdk
+for details.
 """
 version = "0.1.0"
 authors = ["Ben Sully <ben@bsull.io>"]
