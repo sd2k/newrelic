@@ -6,6 +6,11 @@ New Relic SDK
 
 An idiomatic Rust wrapper around the New Relic C SDK.
 
+See also the [rocket_newrelic] crate for example integration with the
+Rocket web framework.
+
+---
+
 Note: versions 0.1.0 onwards of this crate are completely incompatible
 with previous versions as they move away from the deprecated New Relic SDK
 to the newer New Relic C SDK. This has additional requirements: see
