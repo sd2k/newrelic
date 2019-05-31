@@ -28,7 +28,7 @@ Add this crate to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-new-relic = "0.1"
+new-relic = "0.2"
 ```
 
 You can then instrument your code as follows:

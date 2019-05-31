@@ -9,7 +9,7 @@ to the newer New Relic C SDK. This has additional requirements: see
 https://docs.newrelic.com/docs/agents/c-sdk/get-started/introduction-c-sdk
 for details.
 """
-version = "0.1.0"
+version = "0.2.0"
 authors = ["Ben Sully <ben@bsull.io>"]
 categories = ["api-bindings"]
 edition = "2018"
