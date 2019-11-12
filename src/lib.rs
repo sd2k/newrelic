@@ -62,9 +62,6 @@ This crate still requires the New Relic daemon to be running as per the
 */
 #![deny(missing_docs)]
 
-#[macro_use]
-extern crate derive_more;
-
 mod app;
 mod error;
 mod event;
