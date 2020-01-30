@@ -107,3 +107,4 @@ fn main() {
 
 [c-sdk]: https://docs.newrelic.com/docs/agents/c-sdk/get-started/introduction-c-sdk#architecture
 [newrelic-sys]: https://crates.io/crates/newrelic-sys
+[rocket_newrelic]: https://crates.io/crates/rocket_newrelic
