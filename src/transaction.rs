@@ -36,35 +36,35 @@ pub enum Attribute<'a> {
 impl<'a> From<i32> for Attribute<'a> {
     #[allow(unused_variables)]
     #[inline]
-    fn from(original: (i32)) -> Attribute<'a> {
+    fn from(original: i32) -> Attribute<'a> {
         Attribute::Int(original)
     }
 }
 impl<'a> From<i64> for Attribute<'a> {
     #[allow(unused_variables)]
     #[inline]
-    fn from(original: (i64)) -> Attribute<'a> {
+    fn from(original: i64) -> Attribute<'a> {
         Attribute::Long(original)
     }
 }
 impl<'a> From<f64> for Attribute<'a> {
     #[allow(unused_variables)]
     #[inline]
-    fn from(original: (f64)) -> Attribute<'a> {
+    fn from(original: f64) -> Attribute<'a> {
         Attribute::Float(original)
     }
 }
 impl<'a> From<&'a str> for Attribute<'a> {
     #[allow(unused_variables)]
     #[inline]
-    fn from(original: (&'a str)) -> Attribute<'a> {
+    fn from(original: &'a str) -> Attribute<'a> {
         Attribute::String(original)
     }
 }
 impl<'a> From<&'a String> for Attribute<'a> {
     #[allow(unused_variables)]
     #[inline]
-    fn from(original: (&'a String)) -> Attribute<'a> {
+    fn from(original: &'a String) -> Attribute<'a> {
         Attribute::OwnedString(original)
     }
 }
