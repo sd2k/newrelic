@@ -32,21 +32,20 @@ use std::{env, thread, time::Duration};
 
 use newrelic::{App, NewRelicConfig};
 
-fn main() {
-    let license_key =
-        env::var("NEW_RELIC_LICENSE_KEY").unwrap_or_else(|_| "example-license-key".to_string());
-    let app = App::new("my app", &license_key).expect("Could not create app");
+let license_key =
+    env::var("NEW_RELIC_LICENSE_KEY").unwrap_or_else(|_| "example-license-key".to_string());
+let app = App::new("my app", &license_key).expect("Could not create app");
 
+let work = || {
     // Start a web transaction and a segment
     let _transaction = app
         .web_transaction("Transaction name")
         .expect("Could not start transaction");
     thread::sleep(Duration::from_secs(1));
+    // Transaction ends automatically when dropped.
+};
 
-    // Transaction ends automatically.
-
-    // App is destroyed automatically.
-}
+// App is destroyed automatically upon going out of scope.
 ```
 
 There are several more detailed examples in the [examples] directory of the
