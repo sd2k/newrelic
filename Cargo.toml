@@ -18,7 +18,7 @@ license = "MIT/Apache-2.0"
 
 [dependencies]
 log = ">0.4.0"
-newrelic-sys = "0.1"
+newrelic-sys = "0.2"
 
 [badges]
 maintenance = { status = "passively-maintained" }
