@@ -26,6 +26,8 @@ pub enum Error {
     /// If errors still occur after checking the daemon setup, check the
     /// New Relic SDK logs for more details.
     DaemonError,
+    /// The specified duration is too long
+    DurationOverFlow,
     /// The transaction could not be ignored.
     IgnoreError,
     /// The provided log file contained non-unicode characters.
@@ -65,6 +67,7 @@ impl fmt::Display for Error {
                 "Error connecting to New Relic daemon; {}",
                 CHECK_NEW_RELIC_LOGS
             ),
+            Error::DurationOverFlow => write!(f, "The specified duration is too long"),
             Error::CustomMetricError => {
                 write!(f, "Error recording custom metric; {}", CHECK_NEW_RELIC_LOGS)
             }

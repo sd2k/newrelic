@@ -12,6 +12,9 @@ struct InnerSegment<'a> {
     inner: *mut ffi::newrelic_segment_t,
 }
 
+unsafe impl<'a> Send for InnerSegment<'a> {}
+unsafe impl<'a> Sync for InnerSegment<'a> {}
+
 /// A segment within a transaction.
 ///
 /// Use segments to instrument transactions with greater granularity.
@@ -250,6 +253,48 @@ impl<'a> Segment<'a> {
             func(Segment { inner: None })
         }
     }
+
+    ///
+    /// Create an external segment within this transaction.
+    ///
+    /// Example:
+    ///
+    /// ```rust
+    /// use std::{thread, time::Duration};
+    ///
+    /// use newrelic::{App, ExternalParamsBuilder};
+    ///
+    /// # if false {
+    /// let app = App::new("Test app", "Test license key")
+    ///     .expect("Could not create app");
+    /// let transaction = app
+    ///     .web_transaction("Test transaction")
+    ///     .expect("Could not start transaction");
+    /// let segment_params = ExternalParamsBuilder::new("https://www.rust-lang.org/")
+    ///     .procedure("GET")
+    ///     .library("reqwest")
+    ///     .build()
+    ///     .expect("Invalid external segment parameters");
+    /// {
+    ///     let segment = transaction.create_external_segment(&segment_params);
+    ///     let _headers = segment.distributed_trace()?;
+    ///     thread::sleep(Duration::from_secs(1))
+    /// }
+    /// # }
+    /// ```
+    #[cfg(feature = "distributed_tracing")]
+    pub fn distributed_trace(&self) -> Result<String> {
+        let (segment, transaction) = match self.inner.as_ref() {
+            Some(inner) => (inner.inner, inner.transaction.inner),
+            None => return Ok("".to_string()),
+        };
+
+        let payload = FreeableString::new(unsafe {
+            ffi::newrelic_create_distributed_trace_payload_httpsafe(transaction, segment)
+        });
+
+        payload.convert()
+    }
 }
 
 impl<'a> Default for Segment<'a> {
@@ -267,6 +312,34 @@ impl<'a> Drop for Segment<'a> {
             debug!("Ended segment");
         }
         self.inner = None;
+    }
+}
+
+#[cfg(feature = "distributed_tracing")]
+struct FreeableString(*mut std::os::raw::c_char);
+
+#[cfg(feature = "distributed_tracing")]
+impl FreeableString {
+    fn new(inner: *mut std::os::raw::c_char) -> Self {
+        Self(inner)
+    }
+
+    fn convert(&self) -> Result<String> {
+        let c_str = unsafe { std::ffi::CStr::from_ptr(self.0) };
+
+        Ok(c_str
+            .to_str()
+            .expect("This should really never happen...")
+            .to_string())
+    }
+}
+
+#[cfg(feature = "distributed_tracing")]
+impl Drop for FreeableString {
+    fn drop(&mut self) {
+        unsafe {
+            libc::free(self.0 as *mut std::ffi::c_void);
+        }
     }
 }
 
@@ -365,6 +438,9 @@ impl Drop for ExternalParams {
         }
     }
 }
+
+unsafe impl Send for ExternalParams {}
+unsafe impl Sync for ExternalParams {}
 
 /// The datastore type, used when instrumenting a datastore segment.
 pub enum Datastore {
