@@ -318,6 +318,18 @@ impl Transaction {
         CustomEvent::new(self, event_type)
     }
 
+    /// Change the name of the transaction
+    pub fn name(&self, new_name: &str) -> Result<()> {
+        let metric_name = CString::new(new_name)?;
+
+        let ok = unsafe { ffi::newrelic_set_transaction_name(self.inner, metric_name.as_ptr()) };
+        if ok {
+            Ok(())
+        } else {
+            Err(Error::TransactionNameError)
+        }
+    }
+
     /// Explicitly end this transaction.
     ///
     /// If this is not called, the transaction is automatically ended

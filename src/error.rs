@@ -36,6 +36,8 @@ pub enum Error {
     /// The transaction could not be started.
     /// Check the New Relic SDK logs for more details.
     TransactionStartError,
+    /// There was an error changing the name of the transaction
+    TransactionNameError,
     /// A string parameter contained a null byte and could not be converted
     /// to a CString.
     NulError(NulError),
@@ -70,6 +72,11 @@ impl fmt::Display for Error {
             Error::NulError(inner) => write!(f, "{}", inner),
             Error::LogFileError => write!(f, "Invalid log file (must be valid Unicode)"),
             Error::LoggingError => write!(f, "Error configuring logging; {}", CHECK_NEW_RELIC_LOGS),
+            Error::TransactionNameError => write!(
+                f,
+                "Error changing the transaction name; {}",
+                CHECK_NEW_RELIC_LOGS
+            ),
             Error::TransactionStartError => {
                 write!(f, "Error starting transaction; {}", CHECK_NEW_RELIC_LOGS)
             }
