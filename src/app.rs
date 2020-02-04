@@ -319,12 +319,11 @@ impl<'a> NewRelicConfig<'a> {
             None => None,
         };
         let timeout = self.timeout.map(|t| t.as_millis()).unwrap_or(0) as i32;
-        let ok = unsafe {
-            ffi::newrelic_init(
-                socket.map(|s| s.as_ptr()).unwrap_or_else(std::ptr::null),
-                timeout,
-            )
-        };
+        let socket = socket
+            .as_ref()
+            .map(|s| s.as_ptr())
+            .unwrap_or_else(std::ptr::null);
+        let ok = unsafe { ffi::newrelic_init(socket, timeout) };
         if ok {
             Ok(())
         } else {
