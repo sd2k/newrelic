@@ -17,6 +17,15 @@ jobs:
         auth_header="$(git config --local --get http.https://github.com/.extraheader)"
         git submodule sync --recursive
         git -c "http.extraheader=$auth_header" -c protocol.version=2 submodule update --init --force --recursive --depth=1
+    - name: Build and run daemon
+      shell: bash
+      run: |
+        docker build -t newrelic-daemon -f Dockerfile.daemon .
+        docker run --rm \
+          -d \
+          -v $PWD/newrelic-logs:/var/log/newrelic \
+          -v /tmp:/tmp \
+          newrelic-daemon
     - name: Rust Action
       uses: icepuma/rust-action@1.41.0
       with:
