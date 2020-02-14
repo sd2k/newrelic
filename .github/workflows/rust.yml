@@ -28,5 +28,7 @@ jobs:
           newrelic-daemon
     - name: Rust Action
       uses: icepuma/rust-action@1.41.0
+      env:
+        NEW_RELIC_LICENSE_KEY: ${{ secrets.NEW_RELIC_LICENSE_KEY }}
       with:
         args: cargo fmt -- --check && cargo clippy -- -Dwarnings && cargo test
