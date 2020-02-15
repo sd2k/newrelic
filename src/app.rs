@@ -42,7 +42,6 @@ pub enum RecordSQL {
 /// use newrelic::{AppBuilder, TracingThreshold};
 ///
 /// # fn main() -> Result<(), newrelic::Error> {
-/// # if false {
 /// let license_key = std::env::var("NEW_RELIC_LICENSE_KEY")
 ///     .unwrap_or_else(|_| "example-license-key".to_string());
 /// let app = AppBuilder::new("my app", &license_key)
@@ -53,7 +52,6 @@ pub enum RecordSQL {
 ///     .span_events(true)
 ///     .build()
 ///     .expect("Unable to create app");
-/// # }
 /// # Ok(())
 /// # }
 /// ```

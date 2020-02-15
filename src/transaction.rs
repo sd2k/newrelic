@@ -163,8 +163,9 @@ impl Transaction {
     ///
     /// use newrelic::App;
     ///
-    /// # if false {
-    /// let app = App::new("Test app", "Test license key")
+    /// let license_key = std::env::var("NEW_RELIC_LICENSE_KEY").unwrap();
+    ///
+    /// let app = App::new("my app", &license_key)
     ///     .expect("Could not create app");
     /// let transaction = app
     ///     .web_transaction("Test transaction")
@@ -172,7 +173,6 @@ impl Transaction {
     /// transaction.custom_segment("Test segment", "Test category", |_| {
     ///     thread::sleep(Duration::from_secs(1))
     /// });
-    /// # }
     /// ```
     pub fn custom_segment<F, V>(&self, name: &str, category: &str, func: F) -> V
     where
@@ -191,8 +191,9 @@ impl Transaction {
     ///
     /// use newrelic::{App, Datastore, DatastoreParamsBuilder};
     ///
-    /// # if false {
-    /// let app = App::new("Test app", "Test license key")
+    /// let license_key = std::env::var("NEW_RELIC_LICENSE_KEY").unwrap();
+    ///
+    /// let app = App::new("my app", &license_key)
     ///     .expect("Could not create app");
     /// let transaction = app
     ///     .web_transaction("Test transaction")
@@ -205,7 +206,6 @@ impl Transaction {
     /// transaction.datastore_segment(&segment_params, |_| {
     ///     thread::sleep(Duration::from_secs(1))
     /// });
-    /// # }
     /// ```
     pub fn datastore_segment<F, V>(&self, params: &DatastoreParams, func: F) -> V
     where
@@ -224,8 +224,9 @@ impl Transaction {
     ///
     /// use newrelic::{App, ExternalParamsBuilder};
     ///
-    /// # if false {
-    /// let app = App::new("Test app", "Test license key")
+    /// let license_key = std::env::var("NEW_RELIC_LICENSE_KEY").unwrap();
+    ///
+    /// let app = App::new("my app", &license_key)
     ///     .expect("Could not create app");
     /// let transaction = app
     ///     .web_transaction("Test transaction")
@@ -238,7 +239,6 @@ impl Transaction {
     /// transaction.external_segment(&segment_params, |_| {
     ///     thread::sleep(Duration::from_secs(1))
     /// });
-    /// # }
     /// ```
     pub fn external_segment<F, V>(&self, params: &ExternalParams, func: F) -> V
     where
@@ -257,8 +257,9 @@ impl Transaction {
     ///
     /// use newrelic::{App, ExternalParamsBuilder};
     ///
-    /// # if false {
-    /// let app = App::new("Test app", "Test license key")
+    /// let license_key = std::env::var("NEW_RELIC_LICENSE_KEY").unwrap();
+    ///
+    /// let app = App::new("my app", &license_key)
     ///     .expect("Could not create app");
     /// let transaction = app
     ///     .web_transaction("Test transaction")
@@ -272,7 +273,6 @@ impl Transaction {
     ///     let _ = transaction.create_external_segment(&segment_params);
     ///     thread::sleep(Duration::from_secs(1))
     /// }
-    /// # }
     /// ```
     pub fn create_external_segment<'a>(&'a self, params: &ExternalParams) -> Segment<'a> {
         Segment::external(self, params)
@@ -287,8 +287,9 @@ impl Transaction {
     ///
     /// use newrelic::{App, Datastore, DatastoreParamsBuilder};
     ///
-    /// # if false {
-    /// let app = App::new("Test app", "Test license key")
+    /// let license_key = std::env::var("NEW_RELIC_LICENSE_KEY").unwrap();
+    ///
+    /// let app = App::new("my app", &license_key)
     ///     .expect("Could not create app");
     /// let transaction = app
     ///     .web_transaction("Test transaction")
@@ -302,7 +303,6 @@ impl Transaction {
     ///     let _ = transaction.create_datastore_segment(&segment_params);
     ///     thread::sleep(Duration::from_secs(1))
     /// }
-    /// # }
     /// ```
     pub fn create_datastore_segment<'a>(&'a self, params: &DatastoreParams) -> Segment<'a> {
         Segment::datastore(self, params)
@@ -317,8 +317,9 @@ impl Transaction {
     ///
     /// use newrelic::App;
     ///
-    /// # if false {
-    /// let app = App::new("Test app", "Test license key")
+    /// let license_key = std::env::var("NEW_RELIC_LICENSE_KEY").unwrap();
+    ///
+    /// let app = App::new("my app", &license_key)
     ///     .expect("Could not create app");
     /// let transaction = app
     ///     .web_transaction("Test transaction")
@@ -327,7 +328,6 @@ impl Transaction {
     ///     let _ = transaction.create_custom_segment("Test segment", "Test category");
     ///     thread::sleep(Duration::from_secs(1))
     /// }
-    /// # }
     /// ```
     pub fn create_custom_segment<'a>(&'a self, name: &str, category: &str) -> Segment<'a> {
         Segment::custom(self, name, category)
@@ -387,8 +387,9 @@ impl Transaction {
     ///
     /// use newrelic::App;
     ///
-    /// # if false {
-    /// let app = App::new("Test app", "Test license key")
+    /// let license_key = std::env::var("NEW_RELIC_LICENSE_KEY").unwrap();
+    ///
+    /// let app = App::new("my app", &license_key)
     ///     .expect("Could not create app");
     /// let transaction = app
     ///     .web_transaction("Test transaction")
@@ -397,7 +398,6 @@ impl Transaction {
     ///     .expect("Could not create custom event");
     /// custom_event.add_attribute("number of foos", 1_000);
     /// custom_event.record();
-    /// # }
     /// ```
     pub fn custom_event(&self, event_type: &str) -> Result<CustomEvent> {
         CustomEvent::new(self, event_type)

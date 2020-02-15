@@ -114,8 +114,9 @@ impl<'a> Segment<'a> {
     ///
     /// use newrelic::App;
     ///
-    /// # if false {
-    /// let app = App::new("Test app", "Test license key")
+    /// let license_key = std::env::var("NEW_RELIC_LICENSE_KEY").unwrap();
+    ///
+    /// let app = App::new("my app", &license_key)
     ///     .expect("Could not create app");
     /// let transaction = app
     ///     .web_transaction("Transaction name")
@@ -132,7 +133,6 @@ impl<'a> Segment<'a> {
     ///     });
     ///     expensive_val_1 * expensive_val_2
     /// });
-    /// # }
     /// ```
     pub fn custom_nested<F, V>(&self, name: &str, category: &str, func: F) -> V
     where
@@ -163,8 +163,9 @@ impl<'a> Segment<'a> {
     ///
     /// use newrelic::{App, Datastore, DatastoreParamsBuilder};
     ///
-    /// # if false {
-    /// let app = App::new("Test app", "Test license key")
+    /// let license_key = std::env::var("NEW_RELIC_LICENSE_KEY").unwrap();
+    ///
+    /// let app = App::new("my app", &license_key)
     ///     .expect("Could not create app");
     /// let transaction = app
     ///     .web_transaction("Transaction name")
@@ -182,7 +183,6 @@ impl<'a> Segment<'a> {
     ///     });
     ///     expensive_val * 2
     /// });
-    /// # }
     /// ```
     pub fn datastore_nested<F, V>(&self, params: &DatastoreParams, func: F) -> V
     where
@@ -213,8 +213,9 @@ impl<'a> Segment<'a> {
     ///
     /// use newrelic::{App, ExternalParamsBuilder};
     ///
-    /// # if false {
-    /// let app = App::new("Test app", "Test license key")
+    /// let license_key = std::env::var("NEW_RELIC_LICENSE_KEY").unwrap();
+    ///
+    /// let app = App::new("my app", &license_key)
     ///     .expect("Could not create app");
     /// let transaction = app
     ///     .web_transaction("Transaction name")
@@ -232,7 +233,6 @@ impl<'a> Segment<'a> {
     ///     });
     ///     expensive_val * 2
     /// });
-    /// # }
     /// ```
     pub fn external_nested<F, V>(&self, params: &ExternalParams, func: F) -> V
     where
@@ -269,13 +269,17 @@ impl<'a> Segment<'a> {
     /// Example:
     ///
     /// ```rust
+    /// # use newrelic::Error;
+    /// # fn main() -> Result<(), Error> {
     /// use std::{thread, time::Duration};
     ///
-    /// use newrelic::{App, ExternalParamsBuilder};
+    /// use newrelic::{AppBuilder, ExternalParamsBuilder};
     ///
-    /// # if false {
-    /// let app = App::new("Test app", "Test license key")
-    ///     .expect("Could not create app");
+    /// let license_key = std::env::var("NEW_RELIC_LICENSE_KEY").unwrap();
+    ///
+    /// let app = AppBuilder::new("my app", &license_key)?
+    ///     .distributed_tracing(true)
+    ///     .build()?;
     /// let transaction = app
     ///     .web_transaction("Test transaction")
     ///     .expect("Could not start transaction");
@@ -289,6 +293,7 @@ impl<'a> Segment<'a> {
     ///     let _header = segment.distributed_trace();
     ///     thread::sleep(Duration::from_secs(1))
     /// }
+    /// #   Ok(())
     /// # }
     /// ```
     /// [newrelic site]:

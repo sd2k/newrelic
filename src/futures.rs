@@ -69,7 +69,8 @@ pub trait Segmented: Sized {
     ///
     /// ```rust
     /// # use newrelic::Error;
-    /// # async fn run() -> Result<(), Error> {
+    /// # #[tokio::main]
+    /// # async fn main() -> Result<(), Error> {
     /// use newrelic::{App, Segmented};
     ///
     /// let license_key = std::env::var("NEW_RELIC_LICENSE_KEY").unwrap();
@@ -84,7 +85,7 @@ pub trait Segmented: Sized {
     ///     .custom_segment(&transaction, "Segment name", "Segment category")
     ///     .await;
     ///
-    /// # Ok(())
+    /// #   Ok(())
     /// # }
     /// ```
     fn custom_segment<'a, T>(
@@ -110,7 +111,8 @@ pub trait Segmented: Sized {
     ///
     /// ```rust
     /// # use newrelic::Error;
-    /// # async fn run() -> Result<(), Error> {
+    /// # #[tokio::main]
+    /// # async fn main() -> Result<(), Error> {
     /// use newrelic::{App, Datastore, DatastoreParamsBuilder, Segmented};
     ///
     /// let license_key = std::env::var("NEW_RELIC_LICENSE_KEY").unwrap();
@@ -156,7 +158,8 @@ pub trait Segmented: Sized {
     ///
     /// ```rust
     /// # use newrelic::Error;
-    /// # async fn run() -> Result<(), Error> {
+    /// # #[tokio::main]
+    /// # async fn main() -> Result<(), Error> {
     /// use newrelic::{App, ExternalParamsBuilder, Segmented};
     ///
     /// let license_key = std::env::var("NEW_RELIC_LICENSE_KEY").unwrap();
