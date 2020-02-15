@@ -22,6 +22,9 @@ newrelic-sys = "0.2"
 libc = { version="0.2", optional = true }
 pin-project = { version="0.4", optional = true }
 
+[dev-dependencies]
+tokio = {version="0.2", features=["rt-core", "test-util", "time"]}
+
 [features]
 default = []
 distributed_tracing = ["libc"]

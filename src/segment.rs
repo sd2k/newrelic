@@ -254,8 +254,17 @@ impl<'a> Segment<'a> {
         }
     }
 
+    /// Create a distributed trace payload, a base64-encoded string, to add to a service's outbound
+    /// requests.
     ///
-    /// Create an external segment within this transaction.
+    /// This payload contains the metadata necessary to link spans together for a complete
+    /// distributed trace. The metadata includes: the trace ID number, the span ID number, New
+    /// Relic account ID number, and sampling information. Note that a payload must be created
+    /// within an active transaction.
+    ///
+    /// This is normally included in the "newrelic" header of an outbound http request.
+    ///
+    /// See the [newrelic site] for more information on distributed tracing.
     ///
     /// Example:
     ///
@@ -277,16 +286,19 @@ impl<'a> Segment<'a> {
     ///     .expect("Invalid external segment parameters");
     /// {
     ///     let segment = transaction.create_external_segment(&segment_params);
-    ///     let _headers = segment.distributed_trace()?;
+    ///     let _header = segment.distributed_trace();
     ///     thread::sleep(Duration::from_secs(1))
     /// }
     /// # }
     /// ```
+    /// [newrelic site]:
+    /// https://docs.newrelic.com/docs/understand-dependencies/distributed-tracing/get-started/introduction-distributed-tracing
     #[cfg(feature = "distributed_tracing")]
-    pub fn distributed_trace(&self) -> Result<String> {
+    #[cfg_attr(docsrs, doc(cfg(feature = "distributed_tracing")))]
+    pub fn distributed_trace(&self) -> String {
         let (segment, transaction) = match self.inner.as_ref() {
             Some(inner) => (inner.inner, inner.transaction.inner),
-            None => return Ok("".to_string()),
+            None => return "".to_string(),
         };
 
         let payload = FreeableString::new(unsafe {
@@ -316,25 +328,25 @@ impl<'a> Drop for Segment<'a> {
 }
 
 #[cfg(feature = "distributed_tracing")]
+#[cfg_attr(docsrs, doc(cfg(feature = "distributed_tracing")))]
 struct FreeableString(*mut std::os::raw::c_char);
 
 #[cfg(feature = "distributed_tracing")]
+#[cfg_attr(docsrs, doc(cfg(feature = "distributed_tracing")))]
 impl FreeableString {
     fn new(inner: *mut std::os::raw::c_char) -> Self {
         Self(inner)
     }
 
-    fn convert(&self) -> Result<String> {
+    fn convert(&self) -> String {
         let c_str = unsafe { std::ffi::CStr::from_ptr(self.0) };
 
-        Ok(c_str
-            .to_str()
-            .expect("This should really never happen...")
-            .to_string())
+        c_str.to_str().unwrap().to_string()
     }
 }
 
 #[cfg(feature = "distributed_tracing")]
+#[cfg_attr(docsrs, doc(cfg(feature = "distributed_tracing")))]
 impl Drop for FreeableString {
     fn drop(&mut self) {
         unsafe {

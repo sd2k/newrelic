@@ -41,18 +41,20 @@ pub enum RecordSQL {
 ///
 /// use newrelic::{AppBuilder, TracingThreshold};
 ///
+/// # fn main() -> Result<(), newrelic::Error> {
 /// # if false {
-/// let license_key = env::var("NEW_RELIC_LICENSE_KEY")
+/// let license_key = std::env::var("NEW_RELIC_LICENSE_KEY")
 ///     .unwrap_or_else(|_| "example-license-key".to_string());
 /// let app = AppBuilder::new("my app", &license_key)
 ///     .expect("Invalid license key or app name")
 ///     .transaction_threshold(
 ///         TracingThreshold::OverDuration(Duration::from_millis(100))
-///     )
+///     )?
 ///     .span_events(true)
-///     .distributed_tracing(true)
 ///     .build()
 ///     .expect("Unable to create app");
+/// # }
+/// # Ok(())
 /// # }
 /// ```
 pub struct AppBuilder {
@@ -60,21 +62,25 @@ pub struct AppBuilder {
 }
 
 impl AppBuilder {
-    ///
+    /// Begin creating an App
     pub fn new(name: &str, license_key: &str) -> Result<Self> {
         Ok(Self {
             config: AppConfig::new(name, license_key)?,
         })
     }
 
+    /// Whether to enable transaction traces.
     ///
+    /// If set to true for a transaction, the transaction tracer records the top-10 slowest queries
+    /// along with a stack trace of where the call occurred.
     pub fn transaction_tracing(&mut self, enabled: bool) -> &mut Self {
         let config = unsafe { self.config.inner.as_mut() }.unwrap();
-        config.span_events.enabled = enabled;
+        config.transaction_tracer.enabled = enabled;
         self
     }
 
-    ///
+    /// Whether to consider transactions for trace generation based on the apdex configuration or a
+    /// specific duration.
     pub fn transaction_threshold(&mut self, threshold: TracingThreshold) -> Result<&mut Self> {
         let config = unsafe { self.config.inner.as_mut() }.unwrap();
 
@@ -92,7 +98,8 @@ impl AppBuilder {
         Ok(self)
     }
 
-    /// stack_trace_threshold
+    /// Sets the threshold above which the New Relic SDK will record a stack trace for a
+    /// transaction trace.
     pub fn stack_trace_threshold(&mut self, duration: Duration) -> Result<&mut Self> {
         let config = unsafe { self.config.inner.as_mut() }.unwrap();
         config.transaction_tracer.stack_trace_threshold_us =
@@ -100,14 +107,14 @@ impl AppBuilder {
         Ok(self)
     }
 
-    ///
+    /// Whether slow datastore queries are recorded.
     pub fn datastore_reporting(&mut self, enabled: bool) -> &mut Self {
         let config = unsafe { self.config.inner.as_mut() }.unwrap();
         config.transaction_tracer.datastore_reporting.enabled = enabled;
         self
     }
 
-    ///
+    /// Specify the threshold above which a datastore query is considered "slow".
     pub fn datastore_reporting_threshold(&mut self, duration: Duration) -> Result<&mut Self> {
         let config = unsafe { self.config.inner.as_mut() }.unwrap();
         config.transaction_tracer.datastore_reporting.threshold_us =
@@ -115,7 +122,9 @@ impl AppBuilder {
         Ok(self)
     }
 
+    /// Controls the format of the sql put into transaction traces for supported sql-like products.
     ///
+    /// Only relevant if datastore_reporting is enabled
     pub fn record_sql(&mut self, record_sql: RecordSQL) -> &mut Self {
         let config = unsafe { self.config.inner.as_mut() }.unwrap();
         config.transaction_tracer.datastore_reporting.record_sql = match record_sql {
@@ -126,35 +135,37 @@ impl AppBuilder {
         self
     }
 
-    ///
+    /// Whether database names inside datastore segments are reported to New Relic.
     pub fn database_name_reporting(&mut self, enabled: bool) -> &mut Self {
         let config = unsafe { self.config.inner.as_mut() }.unwrap();
         config.datastore_tracer.database_name_reporting = enabled;
         self
     }
 
-    ///
+    /// Whether host and port inside datastore segments are reported to New Relic.
     pub fn datastore_instance_reporting(&mut self, enabled: bool) -> &mut Self {
         let config = unsafe { self.config.inner.as_mut() }.unwrap();
         config.datastore_tracer.instance_reporting = enabled;
         self
     }
 
-    /// span_events
+    /// Whether or not span events are generated.
     pub fn span_events(&mut self, enabled: bool) -> &mut Self {
         let config = unsafe { self.config.inner.as_mut() }.unwrap();
         config.span_events.enabled = enabled;
         self
     }
 
-    /// distributed_tracing
+    /// Whether to enable distributed tracing.
+    #[cfg(feature = "distributed_tracing")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "distributed_tracing")))]
     pub fn distributed_tracing(&mut self, enabled: bool) -> &mut Self {
         let config = unsafe { self.config.inner.as_mut() }.unwrap();
         config.distributed_tracing.enabled = enabled;
         self
     }
 
-    /// AppConfigBuilder.build
+    /// Consume the builder, returning the `App`.
     pub fn build(&self) -> Result<App> {
         App::with_timeout_ref(&self.config, DEFAULT_APP_TIMEOUT)
     }

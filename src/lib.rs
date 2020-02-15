@@ -30,7 +30,11 @@ You can then instrument your code as follows:
 ```rust
 use std::{env, thread, time::Duration};
 
-use newrelic::{App, NewRelicConfig};
+use newrelic::{App, NewRelicConfig, LogLevel, LogOutput};
+
+# NewRelicConfig::default()
+# .logging(LogLevel::Debug, LogOutput::StdErr)
+# .init();
 
 let license_key =
     env::var("NEW_RELIC_LICENSE_KEY").unwrap_or_else(|_| "example-license-key".to_string());
@@ -90,7 +94,9 @@ pub use segment::{
 pub use transaction::{Attribute, Transaction};
 
 #[cfg(feature = "async")]
+#[cfg_attr(docsrs, doc(cfg(feature = "async")))]
 mod futures;
 
 #[cfg(feature = "async")]
+#[cfg_attr(docsrs, doc(cfg(feature = "async")))]
 pub use futures::{OptionalTransaction, Segmented, SegmentedFuture};

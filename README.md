@@ -103,8 +103,22 @@ fn main() {
         do_something_expensive()
     });
 }
+
 ```
 
+Async
+--------
+
+The [`Segmented`] extension trait adds the ability to run a future inside of a segment.  The feature `async` is required.
+
+Distributed Tracing
+--------
+
+[Distributed tracing][nr-distributed-tracing] is available wiith the feature `distributed_tracing`.  Notably, this feature requires the [libc] crate.
+
 [c-sdk]: https://docs.newrelic.com/docs/agents/c-sdk/get-started/introduction-c-sdk#architecture
+[examples]: https://github.com/sd2k/newrelic/tree/master/examples
 [newrelic-sys]: https://crates.io/crates/newrelic-sys
-[rocket_newrelic]: https://crates.io/crates/rocket_newrelic
+[libc]: https://crates.io/crates/libc
+[nr-distributed-tracing]: https://docs.newrelic.com/docs/understand-dependencies/distributed-tracing/get-started/introduction-distributed-tracing
+[`Segmented`]: ./trait.Segmented.html
