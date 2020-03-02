@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [0.2.2] - 2020-03-02
 ### Added
 
 - Support for distributed tracing behind the `distributed_tracing` feature flag. See the `distribued_trace` method of `Segment` for details (from [@bobbyrward](https://github.com/bobbyrward)).
@@ -28,6 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - First version of the crate using this repository and the New Relic C SDK.
 
-[Unreleased]: https://github.com/sd2k/newrelic/compare/v0.2.1...HEAD
+[Unreleased]: https://github.com/sd2k/newrelic/compare/v0.2.2...HEAD
+[0.2.2]: https://github.com/sd2k/newrelic/compare/v0.2.1...v0.2.2
 [0.2.1]: https://github.com/sd2k/newrelic/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/sd2k/newrelic/releases/tag/v0.2.0
