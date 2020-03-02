@@ -26,6 +26,8 @@ pub enum Error {
     /// If errors still occur after checking the daemon setup, check the
     /// New Relic SDK logs for more details.
     DaemonError,
+    /// The specified duration is too long
+    DurationOverFlow,
     /// The transaction could not be ignored.
     IgnoreError,
     /// The provided log file contained non-unicode characters.
@@ -36,6 +38,8 @@ pub enum Error {
     /// The transaction could not be started.
     /// Check the New Relic SDK logs for more details.
     TransactionStartError,
+    /// There was an error changing the name of the transaction
+    TransactionNameError,
     /// A string parameter contained a null byte and could not be converted
     /// to a CString.
     NulError(NulError),
@@ -63,6 +67,7 @@ impl fmt::Display for Error {
                 "Error connecting to New Relic daemon; {}",
                 CHECK_NEW_RELIC_LOGS
             ),
+            Error::DurationOverFlow => write!(f, "The specified duration is too long"),
             Error::CustomMetricError => {
                 write!(f, "Error recording custom metric; {}", CHECK_NEW_RELIC_LOGS)
             }
@@ -70,6 +75,11 @@ impl fmt::Display for Error {
             Error::NulError(inner) => write!(f, "{}", inner),
             Error::LogFileError => write!(f, "Invalid log file (must be valid Unicode)"),
             Error::LoggingError => write!(f, "Error configuring logging; {}", CHECK_NEW_RELIC_LOGS),
+            Error::TransactionNameError => write!(
+                f,
+                "Error changing the transaction name; {}",
+                CHECK_NEW_RELIC_LOGS
+            ),
             Error::TransactionStartError => {
                 write!(f, "Error starting transaction; {}", CHECK_NEW_RELIC_LOGS)
             }

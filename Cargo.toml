@@ -18,7 +18,17 @@ license = "MIT/Apache-2.0"
 
 [dependencies]
 log = ">0.4.0"
-newrelic-sys = "0.1"
+newrelic-sys = "0.2"
+libc = { version="0.2", optional = true }
+pin-project = { version="0.4", optional = true }
+
+[dev-dependencies]
+tokio = {version="0.2", features=["full"]}
+
+[features]
+default = []
+distributed_tracing = ["libc"]
+async = ["pin-project"]
 
 [badges]
 maintenance = { status = "passively-maintained" }

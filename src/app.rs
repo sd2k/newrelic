@@ -1,4 +1,4 @@
-use std::{ffi::CString, path::Path, time::Duration};
+use std::{convert::TryFrom, ffi::CString, path::Path, time::Duration};
 
 use log::{self, debug};
 use newrelic_sys as ffi;
@@ -10,6 +10,164 @@ use crate::{
 
 /// The default timeout when connecting to the daemon upon app creation.
 pub const DEFAULT_APP_TIMEOUT: u16 = 10000;
+
+/// Whether to consider transactions for trace generation based on the apdex configuration or a
+/// specific duration.
+pub enum TracingThreshold {
+    /// Use 4*apdex(T) as the minimum time a transaction must take before  a trace may be generated
+    ApdexFailing,
+    /// The minimum transaction time before a trace may be generated, in microseconds
+    OverDuration(Duration),
+}
+
+/// Controls the format of the sql put into transaction traces for supported sql-like products.
+pub enum RecordSQL {
+    /// Transaction traces have no sql in them.
+    Off,
+    /// The sql is added to the transaction trace as-is.
+    Raw,
+    /// Alphanumeric characters are set to '?'. For example 'SELECT * FROM table WHERE foo = 42'
+    /// is reported as 'SELECT * FROM table WHERE foo = ?'. These obfuscated queries are added to
+    /// the transaction trace for supported datastore products.
+    Obfuscated,
+}
+
+/// A builder to construct a New Relic application
+///
+/// Example:
+///
+/// ```rust
+/// use std::time::Duration;
+///
+/// use newrelic::{AppBuilder, TracingThreshold};
+///
+/// # fn main() -> Result<(), newrelic::Error> {
+/// let license_key = std::env::var("NEW_RELIC_LICENSE_KEY")
+///     .unwrap_or_else(|_| "example-license-key".to_string());
+/// let app = AppBuilder::new("my app", &license_key)
+///     .expect("Invalid license key or app name")
+///     .transaction_threshold(
+///         TracingThreshold::OverDuration(Duration::from_millis(100))
+///     )?
+///     .span_events(true)
+///     .build()
+///     .expect("Unable to create app");
+/// # Ok(())
+/// # }
+/// ```
+pub struct AppBuilder {
+    config: AppConfig,
+}
+
+impl AppBuilder {
+    /// Begin creating an App
+    pub fn new(name: &str, license_key: &str) -> Result<Self> {
+        Ok(Self {
+            config: AppConfig::new(name, license_key)?,
+        })
+    }
+
+    /// Whether to enable transaction traces.
+    ///
+    /// If set to true for a transaction, the transaction tracer records the top-10 slowest queries
+    /// along with a stack trace of where the call occurred.
+    pub fn transaction_tracing(&mut self, enabled: bool) -> &mut Self {
+        let config = unsafe { self.config.inner.as_mut() }.unwrap();
+        config.transaction_tracer.enabled = enabled;
+        self
+    }
+
+    /// Whether to consider transactions for trace generation based on the apdex configuration or a
+    /// specific duration.
+    pub fn transaction_threshold(&mut self, threshold: TracingThreshold) -> Result<&mut Self> {
+        let config = unsafe { self.config.inner.as_mut() }.unwrap();
+
+        match threshold {
+            TracingThreshold::ApdexFailing => {
+                config.transaction_tracer.threshold = ffi::_newrelic_transaction_tracer_threshold_t_NEWRELIC_THRESHOLD_IS_APDEX_FAILING;
+            }
+            TracingThreshold::OverDuration(duration) => {
+                config.transaction_tracer.threshold = ffi::_newrelic_transaction_tracer_threshold_t_NEWRELIC_THRESHOLD_IS_OVER_DURATION;
+                config.transaction_tracer.duration_us =
+                    TryFrom::try_from(duration.as_micros()).map_err(|_| Error::DurationOverFlow)?;
+            }
+        };
+
+        Ok(self)
+    }
+
+    /// Sets the threshold above which the New Relic SDK will record a stack trace for a
+    /// transaction trace.
+    pub fn stack_trace_threshold(&mut self, duration: Duration) -> Result<&mut Self> {
+        let config = unsafe { self.config.inner.as_mut() }.unwrap();
+        config.transaction_tracer.stack_trace_threshold_us =
+            TryFrom::try_from(duration.as_micros()).map_err(|_| Error::DurationOverFlow)?;
+        Ok(self)
+    }
+
+    /// Whether slow datastore queries are recorded.
+    pub fn datastore_reporting(&mut self, enabled: bool) -> &mut Self {
+        let config = unsafe { self.config.inner.as_mut() }.unwrap();
+        config.transaction_tracer.datastore_reporting.enabled = enabled;
+        self
+    }
+
+    /// Specify the threshold above which a datastore query is considered "slow".
+    pub fn datastore_reporting_threshold(&mut self, duration: Duration) -> Result<&mut Self> {
+        let config = unsafe { self.config.inner.as_mut() }.unwrap();
+        config.transaction_tracer.datastore_reporting.threshold_us =
+            TryFrom::try_from(duration.as_micros()).map_err(|_| Error::DurationOverFlow)?;
+        Ok(self)
+    }
+
+    /// Controls the format of the sql put into transaction traces for supported sql-like products.
+    ///
+    /// Only relevant if datastore_reporting is enabled
+    pub fn record_sql(&mut self, record_sql: RecordSQL) -> &mut Self {
+        let config = unsafe { self.config.inner.as_mut() }.unwrap();
+        config.transaction_tracer.datastore_reporting.record_sql = match record_sql {
+            RecordSQL::Off => ffi::_newrelic_tt_recordsql_t_NEWRELIC_SQL_OFF,
+            RecordSQL::Raw => ffi::_newrelic_tt_recordsql_t_NEWRELIC_SQL_RAW,
+            RecordSQL::Obfuscated => ffi::_newrelic_tt_recordsql_t_NEWRELIC_SQL_OBFUSCATED,
+        };
+        self
+    }
+
+    /// Whether database names inside datastore segments are reported to New Relic.
+    pub fn database_name_reporting(&mut self, enabled: bool) -> &mut Self {
+        let config = unsafe { self.config.inner.as_mut() }.unwrap();
+        config.datastore_tracer.database_name_reporting = enabled;
+        self
+    }
+
+    /// Whether host and port inside datastore segments are reported to New Relic.
+    pub fn datastore_instance_reporting(&mut self, enabled: bool) -> &mut Self {
+        let config = unsafe { self.config.inner.as_mut() }.unwrap();
+        config.datastore_tracer.instance_reporting = enabled;
+        self
+    }
+
+    /// Whether or not span events are generated.
+    pub fn span_events(&mut self, enabled: bool) -> &mut Self {
+        let config = unsafe { self.config.inner.as_mut() }.unwrap();
+        config.span_events.enabled = enabled;
+        self
+    }
+
+    /// Whether to enable distributed tracing.
+    #[cfg(feature = "distributed_tracing")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "distributed_tracing")))]
+    pub fn distributed_tracing(&mut self, enabled: bool) -> &mut Self {
+        let config = unsafe { self.config.inner.as_mut() }.unwrap();
+        config.distributed_tracing.enabled = enabled;
+        self
+    }
+
+    /// Consume the builder, returning the `App`.
+    pub fn build(&self) -> Result<App> {
+        App::with_timeout_ref(&self.config, DEFAULT_APP_TIMEOUT)
+    }
+}
 
 #[must_use = "must be used by an App"]
 /// Application config used by New Relic.
@@ -70,6 +228,10 @@ impl App {
     /// to wait for a connection to the daemon to be established; a value of 0
     /// only makes one attempt at connecting to the daemon.
     pub fn with_timeout(config: AppConfig, timeout: u16) -> Result<Self> {
+        Self::with_timeout_ref(&config, timeout)
+    }
+
+    fn with_timeout_ref(config: &AppConfig, timeout: u16) -> Result<Self> {
         let inner = unsafe { ffi::newrelic_create_app(config.inner, timeout) };
         if inner.is_null() {
             Err(Error::ConfigError)
@@ -319,12 +481,11 @@ impl<'a> NewRelicConfig<'a> {
             None => None,
         };
         let timeout = self.timeout.map(|t| t.as_millis()).unwrap_or(0) as i32;
-        let ok = unsafe {
-            ffi::newrelic_init(
-                socket.map(|s| s.as_ptr()).unwrap_or_else(std::ptr::null),
-                timeout,
-            )
-        };
+        let socket = socket
+            .as_ref()
+            .map(|s| s.as_ptr())
+            .unwrap_or_else(std::ptr::null);
+        let ok = unsafe { ffi::newrelic_init(socket, timeout) };
         if ok {
             Ok(())
         } else {
