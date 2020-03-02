@@ -68,6 +68,7 @@ The core functionality from the C SDK is currently implemented. A few extra thin
     * [x] Adding attributes
     * [x] Noticing errors
     * [x] Ignoring transactions
+    * [x] Renaming transactions
     * [ ] Overriding timings
 * [x] Segments
     * [x] Custom
@@ -77,8 +78,10 @@ The core functionality from the C SDK is currently implemented. A few extra thin
     * [ ] Overriding timings
 * [x] Custom events
 * [x] Custom metrics
-* [ ] Transaction tracing configuration
-* [ ] Datastore segment tracing configuration
+* [x] Async segments
+* [x] Distributed tracing
+* [x] Transaction tracing configuration
+* [x] Datastore segment tracing configuration
 * [x] Logging/daemon configuration
 
 Failures
