@@ -1,0 +1,3 @@
+[submodule "vendor/c-sdk"]
+	path = vendor/c-sdk
+	url = https://github.com/newrelic/c-sdk
