@@ -1,4 +1,4 @@
-use std::ffi::CString;
+use std::{ffi::CString, os::raw::c_char};
 
 use log::{debug, error};
 use newrelic_sys as ffi;
@@ -430,9 +430,9 @@ impl<'a> ExternalParamsBuilder<'a> {
 ///
 /// Create this using `ExternalParamsBuilder`.
 pub struct ExternalParams {
-    uri: *mut i8,
-    procedure: *mut i8,
-    library: *mut i8,
+    uri: *mut c_char,
+    procedure: *mut c_char,
+    library: *mut c_char,
 }
 
 impl ExternalParams {
@@ -490,7 +490,7 @@ pub enum Datastore {
 }
 
 impl Datastore {
-    fn inner(&self) -> *mut i8 {
+    fn inner(&self) -> *mut c_char {
         let datastore = match self {
             Datastore::Firebird => ffi::NEWRELIC_DATASTORE_FIREBIRD.as_ptr(),
             Datastore::Informix => ffi::NEWRELIC_DATASTORE_INFORMIX.as_ptr(),
@@ -506,7 +506,7 @@ impl Datastore {
             Datastore::Redis => ffi::NEWRELIC_DATASTORE_REDIS.as_ptr(),
             Datastore::Other => ffi::NEWRELIC_DATASTORE_OTHER.as_ptr(),
         };
-        datastore as *mut i8
+        datastore as *mut c_char
     }
 }
 
@@ -607,13 +607,13 @@ impl<'a> DatastoreParamsBuilder<'a> {
 ///
 /// Create this using `DatastoreParamsBuilder`.
 pub struct DatastoreParams {
-    product: *mut i8,
-    collection: *mut i8,
-    operation: *mut i8,
-    host: *mut i8,
-    port_path_or_id: *mut i8,
-    database_name: *mut i8,
-    query: *mut i8,
+    product: *mut c_char,
+    collection: *mut c_char,
+    operation: *mut c_char,
+    host: *mut c_char,
+    port_path_or_id: *mut c_char,
+    database_name: *mut c_char,
+    query: *mut c_char,
 }
 
 impl DatastoreParams {
