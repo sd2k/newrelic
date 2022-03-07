@@ -22,6 +22,7 @@ unsafe impl<'a> Sync for InnerSegment<'a> {}
 ///
 /// Segments can be nested by calling the various `_nested` methods on
 /// an existing segment.
+#[derive(Default)]
 pub struct Segment<'a> {
     /// This holds either the actual segment, if creation was successful,
     /// or None, if creation failed.
@@ -311,12 +312,6 @@ impl<'a> Segment<'a> {
         });
 
         payload.convert()
-    }
-}
-
-impl<'a> Default for Segment<'a> {
-    fn default() -> Self {
-        Segment { inner: None }
     }
 }
 
