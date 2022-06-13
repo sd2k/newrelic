@@ -313,10 +313,12 @@ impl<'a> Segment<'a> {
 
         payload.convert()
     }
-}
 
-impl<'a> Drop for Segment<'a> {
-    fn drop(&mut self) {
+    /// Explicitly end this segment.
+    ///
+    /// If this is not called, the segment is automatically ended
+    /// when dropped.
+    pub fn end(&mut self) {
         if let Some(ref mut inner) = self.inner {
             unsafe {
                 ffi::newrelic_end_segment(inner.transaction.inner, &mut inner.inner);
@@ -324,6 +326,12 @@ impl<'a> Drop for Segment<'a> {
             debug!("Ended segment");
         }
         self.inner = None;
+    }
+}
+
+impl<'a> Drop for Segment<'a> {
+    fn drop(&mut self) {
+        self.end();
     }
 }
 
