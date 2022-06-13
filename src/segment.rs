@@ -13,6 +13,7 @@ struct InnerSegment<'a> {
 }
 
 unsafe impl<'a> Send for InnerSegment<'a> {}
+
 unsafe impl<'a> Sync for InnerSegment<'a> {}
 
 /// A segment within a transaction.
@@ -136,22 +137,13 @@ impl<'a> Segment<'a> {
     /// });
     /// ```
     pub fn custom_nested<F, V>(&self, name: &str, category: &str, func: F) -> V
-    where
-        F: FnOnce(Segment) -> V,
+        where
+            F: FnOnce(Segment) -> V,
     {
         // We can only create a nested segment if this segment is 'real'
-        if let Some(inner) = &self.inner {
-            let nested_segment = Segment::custom(inner.transaction, name, category);
-
-            // Only try and set the segment parent if creation succeeded
-            if let Some(segment) = &nested_segment.inner {
-                unsafe {
-                    ffi::newrelic_set_segment_parent(segment.inner, inner.inner);
-                }
-            }
-            func(nested_segment)
-        } else {
-            func(Segment { inner: None })
+        match self.create_custom_nested(name, category) {
+            Some(nested_segment) => func(nested_segment),
+            None => func(Segment { inner: None }),
         }
     }
 
@@ -186,22 +178,13 @@ impl<'a> Segment<'a> {
     /// });
     /// ```
     pub fn datastore_nested<F, V>(&self, params: &DatastoreParams, func: F) -> V
-    where
-        F: FnOnce(Segment) -> V,
+        where
+            F: FnOnce(Segment) -> V,
     {
         // We can only create a nested segment if this segment is 'real'
-        if let Some(inner) = &self.inner {
-            let nested_segment = Segment::datastore(inner.transaction, params);
-
-            // Only try and set the segment parent if creation succeeded
-            if let Some(segment) = &nested_segment.inner {
-                unsafe {
-                    ffi::newrelic_set_segment_parent(segment.inner, inner.inner);
-                }
-            }
-            func(nested_segment)
-        } else {
-            func(Segment { inner: None })
+        match self.create_datastore_nested(params) {
+            Some(nested_segment) => func(nested_segment),
+            None => func(Segment { inner: None }),
         }
     }
 
@@ -236,11 +219,131 @@ impl<'a> Segment<'a> {
     /// });
     /// ```
     pub fn external_nested<F, V>(&self, params: &ExternalParams, func: F) -> V
-    where
-        F: FnOnce(Segment) -> V,
+        where
+            F: FnOnce(Segment) -> V,
     {
         // We can only create a nested segment if this segment is 'real'
-        if let Some(inner) = &self.inner {
+        match self.create_external_nested(params) {
+            Some(nested_segment) => func(nested_segment),
+            None => func(Segment { inner: None }),
+        }
+    }
+
+
+    /// Create a new segment nested within this one.
+    ///
+    /// `name` and `category` will have any null bytes removed before
+    /// creating the segment.
+    ///
+    /// Example:
+    ///
+    /// ```rust
+    /// use std::{thread, time::Duration};
+    ///
+    /// use newrelic::App;
+    ///
+    /// let license_key = std::env::var("NEW_RELIC_LICENSE_KEY").unwrap();
+    ///
+    /// let app = App::new("my app", &license_key)
+    ///     .expect("Could not create app");
+    /// let transaction = app
+    ///     .web_transaction("Transaction name")
+    ///     .expect("Could not start transaction");
+    /// let value = transaction.custom_segment("Segment name", "Segment category", |s| {
+    ///     thread::sleep(Duration::from_secs(1));
+    ///     let _ = s.create_custom_nested("Second nested segment", "Nested category")
+    ///         .expect("Could not start nested segment");
+    ///     thread::sleep(Duration::from_secs(1));
+    /// ```
+    pub fn create_custom_nested(&self, name: &str, category: &str) -> Option<Self> {
+        // We can only create a nested segment if this segment is 'real'
+        self.inner.as_ref().map(|inner| {
+            let nested_segment = Segment::custom(inner.transaction, name, category);
+
+            // Only try and set the segment parent if creation succeeded
+            if let Some(segment) = &nested_segment.inner {
+                unsafe {
+                    ffi::newrelic_set_segment_parent(segment.inner, inner.inner);
+                }
+            }
+            nested_segment
+        })
+    }
+
+    /// Create a new datastore segment nested within this one.
+    ///
+    /// Example:
+    ///
+    /// ```rust
+    /// use std::{thread, time::Duration};
+    ///
+    /// use newrelic::{App, Datastore, DatastoreParamsBuilder};
+    ///
+    /// let license_key = std::env::var("NEW_RELIC_LICENSE_KEY").unwrap();
+    ///
+    /// let app = App::new("my app", &license_key)
+    ///     .expect("Could not create app");
+    /// let transaction = app
+    ///     .web_transaction("Transaction name")
+    ///     .expect("Could not start transaction");
+    /// let value = transaction.custom_segment("Segment name", "Segment category", |s| {
+    ///     thread::sleep(Duration::from_secs(1));
+    ///     let datastore_segment_params = DatastoreParamsBuilder::new(Datastore::Postgres)
+    ///         .collection("people")
+    ///         .operation("select")
+    ///         .build()
+    ///         .expect("Invalid datastore segment parameters");
+    ///     let _ = s.create_datastore_nested(&datastore_segment_params)
+    ///         .expect("Could not start nested segment");
+    ///     thread::sleep(Duration::from_secs(1));
+    /// });
+    /// ```
+    pub fn create_datastore_nested(&self, params: &DatastoreParams) -> Option<Self> {
+        // We can only create a nested segment if this segment is 'real'
+        self.inner.as_ref().map(|inner| {
+            let nested_segment = Segment::datastore(inner.transaction, params);
+
+            // Only try and set the segment parent if creation succeeded
+            if let Some(segment) = &nested_segment.inner {
+                unsafe {
+                    ffi::newrelic_set_segment_parent(segment.inner, inner.inner);
+                }
+            }
+            nested_segment
+        })
+    }
+
+    /// Create a new external segment nested within this one.
+    ///
+    /// Example:
+    ///
+    /// ```rust
+    /// use std::{thread, time::Duration};
+    ///
+    /// use newrelic::{App, ExternalParamsBuilder};
+    ///
+    /// let license_key = std::env::var("NEW_RELIC_LICENSE_KEY").unwrap();
+    ///
+    /// let app = App::new("my app", &license_key)
+    ///     .expect("Could not create app");
+    /// let transaction = app
+    ///     .web_transaction("Transaction name")
+    ///     .expect("Could not start transaction");
+    /// let value = transaction.custom_segment("Segment name", "Segment category", |s| {
+    ///     thread::sleep(Duration::from_secs(1));
+    ///     let external_segment_params = ExternalParamsBuilder::new("https://www.rust-lang.org/")
+    ///         .procedure("GET")
+    ///         .library("reqwest")
+    ///         .build()
+    ///         .expect("Invalid external segment parameters");
+    ///     let _ = s.create_external_nested(&external_segment_params)
+    ///         .expect("Could not start nested segment");
+    ///     thread::sleep(Duration::from_secs(1));
+    /// });
+    /// ```
+    pub fn create_external_nested(&self, params: &ExternalParams) -> Option<Self> {
+        // We can only create a nested segment if this segment is 'real'
+        self.inner.as_ref().map(|inner| {
             let nested_segment = Segment::external(inner.transaction, params);
 
             // Only try and set the segment parent if creation succeeded
@@ -249,10 +352,8 @@ impl<'a> Segment<'a> {
                     ffi::newrelic_set_segment_parent(segment.inner, inner.inner);
                 }
             }
-            func(nested_segment)
-        } else {
-            func(Segment { inner: None })
-        }
+            nested_segment
+        })
     }
 
     /// Create a distributed trace payload, a base64-encoded string, to add to a service's outbound
@@ -460,6 +561,7 @@ impl Drop for ExternalParams {
 }
 
 unsafe impl Send for ExternalParams {}
+
 unsafe impl Sync for ExternalParams {}
 
 /// The datastore type, used when instrumenting a datastore segment.
