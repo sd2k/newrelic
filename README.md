@@ -124,5 +124,5 @@ Distributed Tracing
 [newrelic-sys]: https://crates.io/crates/newrelic-sys
 [libc]: https://crates.io/crates/libc
 [nr-distributed-tracing]: https://docs.newrelic.com/docs/understand-dependencies/distributed-tracing/get-started/introduction-distributed-tracing
-[`Segmented`]: ./trait.Segmented.html
+[`Segmented`]: src/futures.rs
 [rocket_newrelic]: https://crates.io/crates/rocket_newrelic
