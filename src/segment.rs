@@ -625,10 +625,6 @@ impl<T: Borrow<Transaction> + Clone> Drop for BorrowingSegment<T> {
     }
 }
 
-unsafe impl<T: Borrow<Transaction> + Clone> Send for BorrowingSegment<T> {}
-
-unsafe impl<T: Borrow<Transaction> + Clone> Sync for BorrowingSegment<T> {}
-
 /// A segment within a transaction.
 ///
 /// Use segments to instrument transactions with greater granularity.
@@ -1262,3 +1258,8 @@ impl Drop for DatastoreParams {
         }
     }
 }
+
+unsafe impl Send for DatastoreParams {}
+
+unsafe impl Sync for DatastoreParams {}
+
