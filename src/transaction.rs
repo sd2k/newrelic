@@ -69,7 +69,7 @@ impl<'a> From<&'a String> for Attribute<'a> {
     }
 }
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Eq)]
 enum State {
     Running,
     Ended,

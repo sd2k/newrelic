@@ -348,7 +348,12 @@ impl<T: Borrow<Transaction> + Clone> BorrowingSegment<T> {
     ///     expensive_val_1 * expensive_val_2
     /// };
     /// ```
-    pub fn custom_nested<F, V>(&self, name: &str, category: &str, func: F) -> Result<V>
+    pub fn custom_nested<F, V>(
+        &self,
+        name: impl Borrow<str>,
+        category: impl Borrow<str>,
+        func: F,
+    ) -> Result<V>
         where
             F: FnOnce(BorrowingSegment<T>) -> V,
     {
@@ -386,7 +391,11 @@ impl<T: Borrow<Transaction> + Clone> BorrowingSegment<T> {
     ///     expensive_val * 2
     /// };
     /// ```
-    pub fn datastore_nested<F, V>(&self, params: &DatastoreParams, func: F) -> Result<V>
+    pub fn datastore_nested<F, V>(
+        &self,
+        params: impl Borrow<DatastoreParams>,
+        func: F,
+    ) -> Result<V>
         where
             F: FnOnce(BorrowingSegment<T>) -> V,
     {
@@ -424,7 +433,11 @@ impl<T: Borrow<Transaction> + Clone> BorrowingSegment<T> {
     ///     expensive_val * 2
     /// };
     /// ```
-    pub fn external_nested<F, V>(&self, params: &ExternalParams, func: F) -> Result<V>
+    pub fn external_nested<F, V>(
+        &self,
+        params: impl Borrow<ExternalParams>,
+        func: F,
+    ) -> Result<V>
         where
             F: FnOnce(BorrowingSegment<T>) -> V,
     {
@@ -458,8 +471,13 @@ impl<T: Borrow<Transaction> + Clone> BorrowingSegment<T> {
     ///     thread::sleep(Duration::from_secs(1));
     /// };
     /// ```
-    pub fn create_custom_nested(&self, name: &str, category: &str) -> Result<Self> {
-        let sp = self.segment_pointer.custom_nested(self.transaction.borrow(), name, category)?;
+    pub fn create_custom_nested(
+        &self,
+        name: impl Borrow<str>,
+        category: impl Borrow<str>,
+    ) -> Result<Self> {
+        let sp = self.segment_pointer.custom_nested(
+            self.transaction.borrow(), name.borrow(), category.borrow())?;
         let transaction = self.transaction.clone();
         Ok(Self { segment_pointer: sp, transaction })
     }
@@ -493,8 +511,12 @@ impl<T: Borrow<Transaction> + Clone> BorrowingSegment<T> {
     ///     thread::sleep(Duration::from_secs(1));
     /// };
     /// ```
-    pub fn create_datastore_nested(&self, params: &DatastoreParams) -> Result<Self> {
-        let sp = self.segment_pointer.datastore_nested(self.transaction.borrow(), params)?;
+    pub fn create_datastore_nested(
+        &self,
+        params: impl Borrow<DatastoreParams>,
+    ) -> Result<Self> {
+        let sp = self.segment_pointer.datastore_nested(
+            self.transaction.borrow(), params.borrow())?;
         let transaction = self.transaction.clone();
         Ok(Self { segment_pointer: sp, transaction })
     }
@@ -528,8 +550,12 @@ impl<T: Borrow<Transaction> + Clone> BorrowingSegment<T> {
     ///     thread::sleep(Duration::from_secs(1));
     /// };
     /// ```
-    pub fn create_external_nested(&self, params: &ExternalParams) -> Result<Self> {
-        let sp = self.segment_pointer.external_nested(self.transaction.borrow(), params)?;
+    pub fn create_external_nested(
+        &self,
+        params: impl Borrow<ExternalParams>,
+    ) -> Result<Self> {
+        let sp = self.segment_pointer.external_nested(
+            self.transaction.borrow(), params.borrow())?;
         let transaction = self.transaction.clone();
         Ok(Self { segment_pointer: sp, transaction })
     }
