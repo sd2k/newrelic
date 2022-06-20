@@ -202,12 +202,42 @@ unsafe impl Send for SegmentPointer {}
 
 unsafe impl Sync for SegmentPointer {}
 
-pub struct GenericSegment<T: Borrow<Transaction> + Clone> {
+
+/// A segment with a reference to a transaction via the `Borrowed` trait.
+///
+/// Use segments to instrument transactions with greater granularity.
+///
+/// `BorrowingSegments` can be nested by calling the various `_nested` methods on
+/// an existing borrowing segment.
+pub struct BorrowingSegment<T: Borrow<Transaction> + Clone> {
+    /// A reference to a parental transaction as mediated by the `Borrow` trait.
     transaction: T,
+    /// A
     segment_pointer: SegmentPointer,
 }
 
-impl<T: Borrow<Transaction> + Clone> GenericSegment<T> {
+impl<T: Borrow<Transaction> + Clone> BorrowingSegment<T> {
+    /// Create a custom segment within this transaction.
+    ///
+    /// Example:
+    ///
+    /// ```rust
+    /// use std::{thread, time::Duration};
+    ///
+    /// use newrelic::{App, BorrowingSegment};
+    ///
+    /// let license_key = std::env::var("NEW_RELIC_LICENSE_KEY").unwrap();
+    ///
+    /// let app = App::new("my app", &license_key)
+    ///     .expect("Could not create app");
+    /// let transaction = app
+    ///     .web_transaction("Test transaction")
+    ///     .expect("Could not start transaction");
+    /// {
+    ///     let _ = BorrowingSegment::custom("Test segment", "Test category", &transaction);
+    ///     thread::sleep(Duration::from_secs(1))
+    /// }
+    /// ```
     pub fn custom(
         transaction: T,
         name: impl Borrow<str>,
@@ -217,6 +247,32 @@ impl<T: Borrow<Transaction> + Clone> GenericSegment<T> {
         Ok(Self { transaction, segment_pointer })
     }
 
+    /// Create a datastore segment within a given transaction.
+    ///
+    /// Example:
+    ///
+    /// ```rust
+    /// use std::{thread, time::Duration};
+    ///
+    /// use newrelic::{App, BorrowingSegment, Datastore, DatastoreParamsBuilder};
+    ///
+    /// let license_key = std::env::var("NEW_RELIC_LICENSE_KEY").unwrap();
+    ///
+    /// let app = App::new("my app", &license_key)
+    ///     .expect("Could not create app");
+    /// let transaction = app
+    ///     .web_transaction("Test transaction")
+    ///     .expect("Could not start transaction");
+    /// let segment_params = DatastoreParamsBuilder::new(Datastore::Postgres)
+    ///     .collection("people")
+    ///     .operation("select")
+    ///     .build()
+    ///     .expect("Invalid datastore segment parameters");
+    /// {
+    ///     let _ = BorrowingSegment::datastore(&segment_params, &transaction);
+    ///     thread::sleep(Duration::from_secs(1))
+    /// }
+    /// ```
     pub fn datastore(
         transaction: T,
         params: impl Borrow<DatastoreParams>,
@@ -225,6 +281,32 @@ impl<T: Borrow<Transaction> + Clone> GenericSegment<T> {
         Ok(Self { transaction, segment_pointer })
     }
 
+    /// Create an external segment within a given transaction.
+    ///
+    /// Example:
+    ///
+    /// ```rust
+    /// use std::{thread, time::Duration};
+    ///
+    /// use newrelic::{App, ExternalParamsBuilder, BorrowingSegment};
+    ///
+    /// let license_key = std::env::var("NEW_RELIC_LICENSE_KEY").unwrap();
+    ///
+    /// let app = App::new("my app", &license_key)
+    ///     .expect("Could not create app");
+    /// let transaction = app
+    ///     .web_transaction("Test transaction")
+    ///     .expect("Could not start transaction");
+    /// let segment_params = ExternalParamsBuilder::new("https://www.rust-lang.org/")
+    ///     .procedure("GET")
+    ///     .library("reqwest")
+    ///     .build()
+    ///     .expect("Invalid external segment parameters");
+    /// {
+    ///     let _ = BorrowingSegment::external(&segment_params, &transaction);
+    ///     thread::sleep(Duration::from_secs(1))
+    /// }
+    /// ```
     pub fn external(
         transaction: T,
         params: impl Borrow<ExternalParams>,
@@ -233,9 +315,42 @@ impl<T: Borrow<Transaction> + Clone> GenericSegment<T> {
         Ok(Self { transaction, segment_pointer })
     }
 
+    /// Create a new segment nested within this one.
+    ///
+    /// `name` and `category` will have any null bytes removed before
+    /// creating the segment.
+    ///
+    /// Example:
+    ///
+    /// ```rust
+    /// use std::{thread, time::Duration};
+    ///
+    /// use newrelic::{App, BorrowingSegment};
+    ///
+    /// let license_key = std::env::var("NEW_RELIC_LICENSE_KEY").unwrap();
+    ///
+    /// let app = App::new("my app", &license_key)
+    ///     .expect("Could not create app");
+    /// let transaction = app
+    ///     .web_transaction("Transaction name")
+    ///     .expect("Could not start transaction");
+    /// let value = {
+    ///     let s = BorrowingSegment::custom("Segment name", "Segment category", &transaction);
+    ///     thread::sleep(Duration::from_secs(1));
+    ///     let expensive_val_1 = s.custom_nested("First nested segment", "Nested category", |_| {
+    ///         thread::sleep(Duration::from_secs(1));
+    ///         3
+    ///     });
+    ///     let expensive_val_2 = s.custom_nested("Second nested segment", "Nested category", |_| {
+    ///         thread::sleep(Duration::from_secs(1));
+    ///         2
+    ///     });
+    ///     expensive_val_1 * expensive_val_2
+    /// };
+    /// ```
     pub fn custom_nested<F, V>(&self, name: &str, category: &str, func: F) -> Result<V>
         where
-            F: FnOnce(GenericSegment<T>) -> V,
+            F: FnOnce(BorrowingSegment<T>) -> V,
     {
         Ok(func(self.create_custom_nested(name, category)?))
     }
@@ -247,7 +362,7 @@ impl<T: Borrow<Transaction> + Clone> GenericSegment<T> {
     /// ```rust
     /// use std::{thread, time::Duration};
     ///
-    /// use newrelic::{App, Datastore, DatastoreParamsBuilder};
+    /// use newrelic::{App, BorrowingSegment, Datastore, DatastoreParamsBuilder};
     ///
     /// let license_key = std::env::var("NEW_RELIC_LICENSE_KEY").unwrap();
     ///
@@ -256,7 +371,8 @@ impl<T: Borrow<Transaction> + Clone> GenericSegment<T> {
     /// let transaction = app
     ///     .web_transaction("Transaction name")
     ///     .expect("Could not start transaction");
-    /// let value = transaction.custom_segment("Segment name", "Segment category", |s| {
+    /// let value = {
+    ///     let s = BorrowingSegment::custom("Segment name", "Segment category", &transaction);
     ///     thread::sleep(Duration::from_secs(1));
     ///     let datastore_segment_params = DatastoreParamsBuilder::new(Datastore::Postgres)
     ///         .collection("people")
@@ -268,11 +384,11 @@ impl<T: Borrow<Transaction> + Clone> GenericSegment<T> {
     ///         3
     ///     });
     ///     expensive_val * 2
-    /// });
+    /// };
     /// ```
     pub fn datastore_nested<F, V>(&self, params: &DatastoreParams, func: F) -> Result<V>
         where
-            F: FnOnce(GenericSegment<T>) -> V,
+            F: FnOnce(BorrowingSegment<T>) -> V,
     {
         Ok(func(self.create_datastore_nested(params)?))
     }
@@ -284,7 +400,7 @@ impl<T: Borrow<Transaction> + Clone> GenericSegment<T> {
     /// ```rust
     /// use std::{thread, time::Duration};
     ///
-    /// use newrelic::{App, ExternalParamsBuilder};
+    /// use newrelic::{App, BorrowingSegment, ExternalParamsBuilder};
     ///
     /// let license_key = std::env::var("NEW_RELIC_LICENSE_KEY").unwrap();
     ///
@@ -293,7 +409,8 @@ impl<T: Borrow<Transaction> + Clone> GenericSegment<T> {
     /// let transaction = app
     ///     .web_transaction("Transaction name")
     ///     .expect("Could not start transaction");
-    /// let value = transaction.custom_segment("Segment name", "Segment category", |s| {
+    /// let value = {
+    ///     let s = BorrowingSegment.custom("Segment name", "Segment category", &transaction);
     ///     thread::sleep(Duration::from_secs(1));
     ///     let external_segment_params = ExternalParamsBuilder::new("https://www.rust-lang.org/")
     ///         .procedure("GET")
@@ -305,11 +422,11 @@ impl<T: Borrow<Transaction> + Clone> GenericSegment<T> {
     ///         3
     ///     });
     ///     expensive_val * 2
-    /// });
+    /// };
     /// ```
     pub fn external_nested<F, V>(&self, params: &ExternalParams, func: F) -> Result<V>
         where
-            F: FnOnce(GenericSegment<T>) -> V,
+            F: FnOnce(BorrowingSegment<T>) -> V,
     {
         Ok(func(self.create_external_nested(params)?))
     }
@@ -324,7 +441,7 @@ impl<T: Borrow<Transaction> + Clone> GenericSegment<T> {
     /// ```rust
     /// use std::{thread, time::Duration};
     ///
-    /// use newrelic::App;
+    /// use newrelic::{App, BorrowingSegment};
     ///
     /// let license_key = std::env::var("NEW_RELIC_LICENSE_KEY").unwrap();
     ///
@@ -333,11 +450,13 @@ impl<T: Borrow<Transaction> + Clone> GenericSegment<T> {
     /// let transaction = app
     ///     .web_transaction("Transaction name")
     ///     .expect("Could not start transaction");
-    /// let value = transaction.custom_segment("Segment name", "Segment category", |s| {
+    /// let value = {
+    ///     let s = BorrowingSegment::custom("Segment name", "Segment category", &transaction);
     ///     thread::sleep(Duration::from_secs(1));
     ///     let _ = s.create_custom_nested("Second nested segment", "Nested category")
     ///         .expect("Could not start nested segment");
     ///     thread::sleep(Duration::from_secs(1));
+    /// };
     /// ```
     pub fn create_custom_nested(&self, name: &str, category: &str) -> Result<Self> {
         let sp = self.segment_pointer.custom_nested(self.transaction.borrow(), name, category)?;
@@ -352,7 +471,7 @@ impl<T: Borrow<Transaction> + Clone> GenericSegment<T> {
     /// ```rust
     /// use std::{thread, time::Duration};
     ///
-    /// use newrelic::{App, Datastore, DatastoreParamsBuilder};
+    /// use newrelic::{App, BorrowingSegment, Datastore, DatastoreParamsBuilder};
     ///
     /// let license_key = std::env::var("NEW_RELIC_LICENSE_KEY").unwrap();
     ///
@@ -361,7 +480,8 @@ impl<T: Borrow<Transaction> + Clone> GenericSegment<T> {
     /// let transaction = app
     ///     .web_transaction("Transaction name")
     ///     .expect("Could not start transaction");
-    /// let value = transaction.custom_segment("Segment name", "Segment category", |s| {
+    /// let value = {
+    ///     let s = BorrowingSegment::custom("Segment name", "Segment category", &transaction);
     ///     thread::sleep(Duration::from_secs(1));
     ///     let datastore_segment_params = DatastoreParamsBuilder::new(Datastore::Postgres)
     ///         .collection("people")
@@ -371,7 +491,7 @@ impl<T: Borrow<Transaction> + Clone> GenericSegment<T> {
     ///     let _ = s.create_datastore_nested(&datastore_segment_params)
     ///         .expect("Could not start nested segment");
     ///     thread::sleep(Duration::from_secs(1));
-    /// });
+    /// };
     /// ```
     pub fn create_datastore_nested(&self, params: &DatastoreParams) -> Result<Self> {
         let sp = self.segment_pointer.datastore_nested(self.transaction.borrow(), params)?;
@@ -386,7 +506,7 @@ impl<T: Borrow<Transaction> + Clone> GenericSegment<T> {
     /// ```rust
     /// use std::{thread, time::Duration};
     ///
-    /// use newrelic::{App, ExternalParamsBuilder};
+    /// use newrelic::{App, BorrowingSegment, ExternalParamsBuilder};
     ///
     /// let license_key = std::env::var("NEW_RELIC_LICENSE_KEY").unwrap();
     ///
@@ -395,7 +515,8 @@ impl<T: Borrow<Transaction> + Clone> GenericSegment<T> {
     /// let transaction = app
     ///     .web_transaction("Transaction name")
     ///     .expect("Could not start transaction");
-    /// let value = transaction.custom_segment("Segment name", "Segment category", |s| {
+    /// let value = {
+    ///     let s = BorrowingSegment::custom("Segment name", "Segment category", &transaction);
     ///     thread::sleep(Duration::from_secs(1));
     ///     let external_segment_params = ExternalParamsBuilder::new("https://www.rust-lang.org/")
     ///         .procedure("GET")
@@ -405,7 +526,7 @@ impl<T: Borrow<Transaction> + Clone> GenericSegment<T> {
     ///     let _ = s.create_external_nested(&external_segment_params)
     ///         .expect("Could not start nested segment");
     ///     thread::sleep(Duration::from_secs(1));
-    /// });
+    /// };
     /// ```
     pub fn create_external_nested(&self, params: &ExternalParams) -> Result<Self> {
         let sp = self.segment_pointer.external_nested(self.transaction.borrow(), params)?;
@@ -432,7 +553,7 @@ impl<T: Borrow<Transaction> + Clone> GenericSegment<T> {
     /// # fn main() -> Result<(), Error> {
     /// use std::{thread, time::Duration};
     ///
-    /// use newrelic::{AppBuilder, ExternalParamsBuilder};
+    /// use newrelic::{AppBuilder, BorrowingSegment, ExternalParamsBuilder};
     ///
     /// let license_key = std::env::var("NEW_RELIC_LICENSE_KEY").unwrap();
     ///
@@ -448,7 +569,7 @@ impl<T: Borrow<Transaction> + Clone> GenericSegment<T> {
     ///     .build()
     ///     .expect("Invalid external segment parameters");
     /// {
-    ///     let segment = transaction.create_external_segment(&segment_params);
+    ///     let segment = BorrowingSegment::external(&segment_params, &transaction);
     ///     let _header = segment.distributed_trace();
     ///     thread::sleep(Duration::from_secs(1))
     /// }
@@ -472,15 +593,15 @@ impl<T: Borrow<Transaction> + Clone> GenericSegment<T> {
     }
 }
 
-impl<T: Borrow<Transaction> + Clone> Drop for GenericSegment<T> {
+impl<T: Borrow<Transaction> + Clone> Drop for BorrowingSegment<T> {
     fn drop(&mut self) {
         self.end();
     }
 }
 
-unsafe impl<T: Borrow<Transaction> + Clone> Send for GenericSegment<T> {}
+unsafe impl<T: Borrow<Transaction> + Clone> Send for BorrowingSegment<T> {}
 
-unsafe impl<T: Borrow<Transaction> + Clone> Sync for GenericSegment<T> {}
+unsafe impl<T: Borrow<Transaction> + Clone> Sync for BorrowingSegment<T> {}
 
 /// A segment within a transaction.
 ///
@@ -497,20 +618,20 @@ pub struct Segment<'a> {
     /// creation can fail quietly. Usually this would be bad, but we probably
     /// just want to continue even if New Relic monitoring isn't working...
     /// right?
-    inner: Option<GenericSegment<&'a Transaction>>,
+    inner: Option<BorrowingSegment<&'a Transaction>>,
 }
 
 impl<'a> Segment<'a> {
     pub(crate) fn custom(transaction: &'a Transaction, name: &str, category: &str) -> Self {
-        Self { inner: GenericSegment::custom(transaction, name, category).ok() }
+        Self { inner: BorrowingSegment::custom(transaction, name, category).ok() }
     }
 
     pub(crate) fn datastore(transaction: &'a Transaction, params: &DatastoreParams) -> Self {
-        Self { inner: GenericSegment::datastore(transaction, params).ok() }
+        Self { inner: BorrowingSegment::datastore(transaction, params).ok() }
     }
 
     pub(crate) fn external(transaction: &'a Transaction, params: &ExternalParams) -> Self {
-        Self { inner: GenericSegment::external(transaction, params).ok() }
+        Self { inner: BorrowingSegment::external(transaction, params).ok() }
     }
 
     /// Create a new segment nested within this one.
