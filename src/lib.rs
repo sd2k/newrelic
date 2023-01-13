@@ -89,7 +89,7 @@ pub use app::{App, AppBuilder, AppConfig, LogOutput, NewRelicConfig, RecordSQL, 
 pub use error::{Error, Result};
 pub use event::CustomEvent;
 pub use segment::{
-    BorrowingSegment, Datastore, DatastoreParams, DatastoreParamsBuilder, ExternalParams,
+    ReferencingSegment, Datastore, DatastoreParams, DatastoreParamsBuilder, ExternalParams,
     ExternalParamsBuilder, Segment,
 };
 pub use transaction::{Attribute, Transaction};
