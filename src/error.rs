@@ -40,6 +40,9 @@ pub enum Error {
     TransactionStartError,
     /// There was an error changing the name of the transaction
     TransactionNameError,
+    /// Check the New Relic SDK logs for more details.
+    /// The segment could not be started.
+    SegmentStartError,
     /// A string parameter contained a null byte and could not be converted
     /// to a CString.
     NulError(NulError),
@@ -82,7 +85,10 @@ impl fmt::Display for Error {
             ),
             Error::TransactionStartError => {
                 write!(f, "Error starting transaction; {}", CHECK_NEW_RELIC_LOGS)
-            }
+            },
+            Error::SegmentStartError => {
+                write!(f, "Error starting segment; {}", CHECK_NEW_RELIC_LOGS)
+            },
         }
     }
 }
