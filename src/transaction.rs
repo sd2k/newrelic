@@ -442,7 +442,7 @@ impl Drop for Transaction {
 
 impl AsRef<Self> for Transaction {
     fn as_ref(&self) -> &Self {
-        &self
+        self
     }
 }
 

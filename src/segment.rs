@@ -1085,7 +1085,7 @@ impl Drop for ExternalParams {
 
 impl AsRef<Self> for ExternalParams {
     fn as_ref(&self) -> &Self {
-        &self
+        self
     }
 }
 
@@ -1280,7 +1280,7 @@ impl Drop for DatastoreParams {
 
 impl AsRef<Self> for DatastoreParams {
     fn as_ref(&self) -> &Self {
-        &self
+        self
     }
 }
 
