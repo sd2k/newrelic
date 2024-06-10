@@ -128,8 +128,8 @@ impl Transaction {
     ///
     /// Returns an error if the New Relic SDK returns an error.
     pub fn add_attribute<'a, T>(&self, name: &str, attribute: T) -> Result<()>
-        where
-            T: Into<Attribute<'a>>,
+    where
+        T: Into<Attribute<'a>>,
     {
         let name = CString::new(name)?;
         let ok = match attribute.into() {
@@ -179,8 +179,8 @@ impl Transaction {
     /// });
     /// ```
     pub fn custom_segment<F, V>(&self, name: &str, category: &str, func: F) -> V
-        where
-            F: FnOnce(Segment) -> V,
+    where
+        F: FnOnce(Segment) -> V,
     {
         let segment = Segment::custom(self, name, category);
         func(segment)
@@ -212,8 +212,8 @@ impl Transaction {
     /// });
     /// ```
     pub fn datastore_segment<F, V>(&self, params: &DatastoreParams, func: F) -> V
-        where
-            F: FnOnce(Segment) -> V,
+    where
+        F: FnOnce(Segment) -> V,
     {
         let segment = Segment::datastore(self, params);
         func(segment)
@@ -245,8 +245,8 @@ impl Transaction {
     /// });
     /// ```
     pub fn external_segment<F, V>(&self, params: &ExternalParams, func: F) -> V
-        where
-            F: FnOnce(Segment) -> V,
+    where
+        F: FnOnce(Segment) -> V,
     {
         let segment = Segment::external(self, params);
         func(segment)

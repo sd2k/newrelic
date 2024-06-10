@@ -3,7 +3,10 @@ use std::{ffi::CString, os::raw::c_char};
 use log::{debug, error};
 use newrelic_sys as ffi;
 
-use crate::{error::{Error, Result}, transaction::Transaction};
+use crate::{
+    error::{Error, Result},
+    transaction::Transaction,
+};
 
 /// A segment pointer.
 ///
@@ -53,7 +56,9 @@ impl SegmentPointer {
                     );
                     Err(Error::SegmentStartError)
                 } else {
-                    Ok(Self { inner: Some(pointer) })
+                    Ok(Self {
+                        inner: Some(pointer),
+                    })
                 }
             }
             _ => {
@@ -81,7 +86,9 @@ impl SegmentPointer {
             error!("Could not create datastore segment due to invalid transaction");
             Err(Error::SegmentStartError)
         } else {
-            Ok(Self { inner: Some(pointer) })
+            Ok(Self {
+                inner: Some(pointer),
+            })
         };
         debug!("Created segment");
         pointer
@@ -100,7 +107,9 @@ impl SegmentPointer {
             error!("Could not create external segment due to invalid transaction");
             Err(Error::SegmentStartError)
         } else {
-            Ok(Self { inner: Some(pointer) })
+            Ok(Self {
+                inner: Some(pointer),
+            })
         };
         debug!("Created segment");
         pointer
@@ -169,10 +178,7 @@ impl SegmentPointer {
     }
 
     #[cfg(feature = "distributed_tracing")]
-    pub fn distributed_trace(
-        &self,
-        transaction: impl AsRef<Transaction>,
-    ) -> Option<String> {
+    pub fn distributed_trace(&self, transaction: impl AsRef<Transaction>) -> Option<String> {
         let transaction = transaction.as_ref();
         self.inner.map(|pointer| {
             let payload = FreeableString::new(unsafe {
@@ -182,10 +188,7 @@ impl SegmentPointer {
         })
     }
 
-    pub fn end(
-        &mut self,
-        transaction: impl AsRef<Transaction>,
-    ) {
+    pub fn end(&mut self, transaction: impl AsRef<Transaction>) {
         if let Some(mut inner) = self.inner {
             let transaction = transaction.as_ref();
             unsafe {
@@ -200,7 +203,6 @@ impl SegmentPointer {
 unsafe impl Send for SegmentPointer {}
 
 unsafe impl Sync for SegmentPointer {}
-
 
 /// A segment with a reference to a transaction via the `AsRef` trait.
 ///
@@ -243,7 +245,10 @@ impl<T: AsRef<Transaction> + Clone> ReferencingSegment<T> {
         category: impl AsRef<str>,
     ) -> Result<Self> {
         let segment_pointer = SegmentPointer::custom(transaction.as_ref(), name, category)?;
-        Ok(Self { transaction, segment_pointer })
+        Ok(Self {
+            transaction,
+            segment_pointer,
+        })
     }
 
     /// Create a datastore segment within a given transaction.
@@ -272,12 +277,12 @@ impl<T: AsRef<Transaction> + Clone> ReferencingSegment<T> {
     ///     thread::sleep(Duration::from_secs(1))
     /// }
     /// ```
-    pub fn datastore(
-        transaction: T,
-        params: impl AsRef<DatastoreParams>,
-    ) -> Result<Self> {
+    pub fn datastore(transaction: T, params: impl AsRef<DatastoreParams>) -> Result<Self> {
         let segment_pointer = SegmentPointer::datastore(transaction.as_ref(), params)?;
-        Ok(Self { transaction, segment_pointer })
+        Ok(Self {
+            transaction,
+            segment_pointer,
+        })
     }
 
     /// Create an external segment within a given transaction.
@@ -306,12 +311,12 @@ impl<T: AsRef<Transaction> + Clone> ReferencingSegment<T> {
     ///     thread::sleep(Duration::from_secs(1))
     /// }
     /// ```
-    pub fn external(
-        transaction: T,
-        params: impl AsRef<ExternalParams>,
-    ) -> Result<Self> {
+    pub fn external(transaction: T, params: impl AsRef<ExternalParams>) -> Result<Self> {
         let segment_pointer = SegmentPointer::external(transaction.as_ref(), params)?;
-        Ok(Self { transaction, segment_pointer })
+        Ok(Self {
+            transaction,
+            segment_pointer,
+        })
     }
 
     /// Create a new segment nested within this one.
@@ -353,8 +358,8 @@ impl<T: AsRef<Transaction> + Clone> ReferencingSegment<T> {
         category: impl AsRef<str>,
         func: F,
     ) -> Result<V>
-        where
-            F: FnOnce(ReferencingSegment<T>) -> V,
+    where
+        F: FnOnce(ReferencingSegment<T>) -> V,
     {
         Ok(func(self.create_custom_nested(name, category)?))
     }
@@ -390,13 +395,9 @@ impl<T: AsRef<Transaction> + Clone> ReferencingSegment<T> {
     ///     expensive_val * 2
     /// };
     /// ```
-    pub fn datastore_nested<F, V>(
-        &self,
-        params: impl AsRef<DatastoreParams>,
-        func: F,
-    ) -> Result<V>
-        where
-            F: FnOnce(ReferencingSegment<T>) -> V,
+    pub fn datastore_nested<F, V>(&self, params: impl AsRef<DatastoreParams>, func: F) -> Result<V>
+    where
+        F: FnOnce(ReferencingSegment<T>) -> V,
     {
         Ok(func(self.create_datastore_nested(params)?))
     }
@@ -432,13 +433,9 @@ impl<T: AsRef<Transaction> + Clone> ReferencingSegment<T> {
     ///     expensive_val * 2
     /// };
     /// ```
-    pub fn external_nested<F, V>(
-        &self,
-        params: impl AsRef<ExternalParams>,
-        func: F,
-    ) -> Result<V>
-        where
-            F: FnOnce(ReferencingSegment<T>) -> V,
+    pub fn external_nested<F, V>(&self, params: impl AsRef<ExternalParams>, func: F) -> Result<V>
+    where
+        F: FnOnce(ReferencingSegment<T>) -> V,
     {
         Ok(func(self.create_external_nested(params)?))
     }
@@ -476,9 +473,15 @@ impl<T: AsRef<Transaction> + Clone> ReferencingSegment<T> {
         category: impl AsRef<str>,
     ) -> Result<Self> {
         let sp = self.segment_pointer.custom_nested(
-            self.transaction.as_ref(), name.as_ref(), category.as_ref())?;
+            self.transaction.as_ref(),
+            name.as_ref(),
+            category.as_ref(),
+        )?;
         let transaction = self.transaction.clone();
-        Ok(Self { segment_pointer: sp, transaction })
+        Ok(Self {
+            segment_pointer: sp,
+            transaction,
+        })
     }
 
     /// Create a new datastore segment nested within this one.
@@ -510,14 +513,15 @@ impl<T: AsRef<Transaction> + Clone> ReferencingSegment<T> {
     ///     thread::sleep(Duration::from_secs(1));
     /// };
     /// ```
-    pub fn create_datastore_nested(
-        &self,
-        params: impl AsRef<DatastoreParams>,
-    ) -> Result<Self> {
-        let sp = self.segment_pointer.datastore_nested(
-            self.transaction.as_ref(), params.as_ref())?;
+    pub fn create_datastore_nested(&self, params: impl AsRef<DatastoreParams>) -> Result<Self> {
+        let sp = self
+            .segment_pointer
+            .datastore_nested(self.transaction.as_ref(), params.as_ref())?;
         let transaction = self.transaction.clone();
-        Ok(Self { segment_pointer: sp, transaction })
+        Ok(Self {
+            segment_pointer: sp,
+            transaction,
+        })
     }
 
     /// Create a new external segment nested within this one.
@@ -549,14 +553,15 @@ impl<T: AsRef<Transaction> + Clone> ReferencingSegment<T> {
     ///     thread::sleep(Duration::from_secs(1));
     /// };
     /// ```
-    pub fn create_external_nested(
-        &self,
-        params: impl AsRef<ExternalParams>,
-    ) -> Result<Self> {
-        let sp = self.segment_pointer.external_nested(
-            self.transaction.as_ref(), params.as_ref())?;
+    pub fn create_external_nested(&self, params: impl AsRef<ExternalParams>) -> Result<Self> {
+        let sp = self
+            .segment_pointer
+            .external_nested(self.transaction.as_ref(), params.as_ref())?;
         let transaction = self.transaction.clone();
-        Ok(Self { segment_pointer: sp, transaction })
+        Ok(Self {
+            segment_pointer: sp,
+            transaction,
+        })
     }
 
     /// Create a distributed trace payload, a base64-encoded string, to add to a service's outbound
@@ -606,7 +611,8 @@ impl<T: AsRef<Transaction> + Clone> ReferencingSegment<T> {
     #[cfg(feature = "distributed_tracing")]
     #[cfg_attr(docsrs, doc(cfg(feature = "distributed_tracing")))]
     pub fn distributed_trace(&self) -> Option<String> {
-        self.segment_pointer.distributed_trace(self.transaction.as_ref())
+        self.segment_pointer
+            .distributed_trace(self.transaction.as_ref())
     }
 
     /// Explicitly end this segment.
@@ -644,15 +650,21 @@ pub struct Segment<'a> {
 
 impl<'a> Segment<'a> {
     pub(crate) fn custom(transaction: &'a Transaction, name: &str, category: &str) -> Self {
-        Self { inner: ReferencingSegment::custom(transaction, name, category).ok() }
+        Self {
+            inner: ReferencingSegment::custom(transaction, name, category).ok(),
+        }
     }
 
     pub(crate) fn datastore(transaction: &'a Transaction, params: &DatastoreParams) -> Self {
-        Self { inner: ReferencingSegment::datastore(transaction, params).ok() }
+        Self {
+            inner: ReferencingSegment::datastore(transaction, params).ok(),
+        }
     }
 
     pub(crate) fn external(transaction: &'a Transaction, params: &ExternalParams) -> Self {
-        Self { inner: ReferencingSegment::external(transaction, params).ok() }
+        Self {
+            inner: ReferencingSegment::external(transaction, params).ok(),
+        }
     }
 
     /// Create a new segment nested within this one.
@@ -688,8 +700,8 @@ impl<'a> Segment<'a> {
     /// });
     /// ```
     pub fn custom_nested<F, V>(&self, name: &str, category: &str, func: F) -> V
-        where
-            F: FnOnce(Segment) -> V,
+    where
+        F: FnOnce(Segment) -> V,
     {
         func(self.create_custom_nested(name, category))
     }
@@ -725,8 +737,8 @@ impl<'a> Segment<'a> {
     /// });
     /// ```
     pub fn datastore_nested<F, V>(&self, params: &DatastoreParams, func: F) -> V
-        where
-            F: FnOnce(Segment) -> V,
+    where
+        F: FnOnce(Segment) -> V,
     {
         func(self.create_datastore_nested(params))
     }
@@ -762,12 +774,11 @@ impl<'a> Segment<'a> {
     /// });
     /// ```
     pub fn external_nested<F, V>(&self, params: &ExternalParams, func: F) -> V
-        where
-            F: FnOnce(Segment) -> V,
+    where
+        F: FnOnce(Segment) -> V,
     {
         func(self.create_external_nested(params))
     }
-
 
     /// Create a new segment nested within this one.
     ///
@@ -796,7 +807,8 @@ impl<'a> Segment<'a> {
     /// ```
     pub fn create_custom_nested(&self, name: &str, category: &str) -> Self {
         // We can only create a nested segment if this segment is 'real'
-        let nested = self.inner
+        let nested = self
+            .inner
             .as_ref()
             .and_then(|inner| inner.create_custom_nested(name, category).ok());
         Self { inner: nested }
@@ -832,7 +844,8 @@ impl<'a> Segment<'a> {
     /// ```
     pub fn create_datastore_nested(&self, params: &DatastoreParams) -> Self {
         // We can only create a nested segment if this segment is 'real'
-        let nested = self.inner
+        let nested = self
+            .inner
             .as_ref()
             .and_then(|inner| inner.create_datastore_nested(params).ok());
         Self { inner: nested }
@@ -868,7 +881,8 @@ impl<'a> Segment<'a> {
     /// ```
     pub fn create_external_nested(&self, params: &ExternalParams) -> Self {
         // We can only create a nested segment if this segment is 'real'
-        let nested = self.inner
+        let nested = self
+            .inner
             .as_ref()
             .and_then(|inner| inner.create_external_nested(params).ok());
         Self { inner: nested }
@@ -1264,7 +1278,6 @@ impl Drop for DatastoreParams {
     }
 }
 
-
 impl AsRef<Self> for DatastoreParams {
     fn as_ref(&self) -> &Self {
         &self
@@ -1274,4 +1287,3 @@ impl AsRef<Self> for DatastoreParams {
 unsafe impl Send for DatastoreParams {}
 
 unsafe impl Sync for DatastoreParams {}
-
