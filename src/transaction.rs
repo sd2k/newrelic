@@ -40,6 +40,7 @@ impl<'a> From<i32> for Attribute<'a> {
         Attribute::Int(original)
     }
 }
+
 impl<'a> From<i64> for Attribute<'a> {
     #[allow(unused_variables)]
     #[inline]
@@ -47,6 +48,7 @@ impl<'a> From<i64> for Attribute<'a> {
         Attribute::Long(original)
     }
 }
+
 impl<'a> From<f64> for Attribute<'a> {
     #[allow(unused_variables)]
     #[inline]
@@ -54,6 +56,7 @@ impl<'a> From<f64> for Attribute<'a> {
         Attribute::Float(original)
     }
 }
+
 impl<'a> From<&'a str> for Attribute<'a> {
     #[allow(unused_variables)]
     #[inline]
@@ -61,6 +64,7 @@ impl<'a> From<&'a str> for Attribute<'a> {
         Attribute::String(original)
     }
 }
+
 impl<'a> From<&'a String> for Attribute<'a> {
     #[allow(unused_variables)]
     #[inline]
@@ -69,7 +73,7 @@ impl<'a> From<&'a String> for Attribute<'a> {
     }
 }
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Eq)]
 enum State {
     Running,
     Ended,
@@ -124,8 +128,8 @@ impl Transaction {
     ///
     /// Returns an error if the New Relic SDK returns an error.
     pub fn add_attribute<'a, T>(&self, name: &str, attribute: T) -> Result<()>
-    where
-        T: Into<Attribute<'a>>,
+        where
+            T: Into<Attribute<'a>>,
     {
         let name = CString::new(name)?;
         let ok = match attribute.into() {
@@ -175,8 +179,8 @@ impl Transaction {
     /// });
     /// ```
     pub fn custom_segment<F, V>(&self, name: &str, category: &str, func: F) -> V
-    where
-        F: FnOnce(Segment) -> V,
+        where
+            F: FnOnce(Segment) -> V,
     {
         let segment = Segment::custom(self, name, category);
         func(segment)
@@ -208,8 +212,8 @@ impl Transaction {
     /// });
     /// ```
     pub fn datastore_segment<F, V>(&self, params: &DatastoreParams, func: F) -> V
-    where
-        F: FnOnce(Segment) -> V,
+        where
+            F: FnOnce(Segment) -> V,
     {
         let segment = Segment::datastore(self, params);
         func(segment)
@@ -241,8 +245,8 @@ impl Transaction {
     /// });
     /// ```
     pub fn external_segment<F, V>(&self, params: &ExternalParams, func: F) -> V
-    where
-        F: FnOnce(Segment) -> V,
+        where
+            F: FnOnce(Segment) -> V,
     {
         let segment = Segment::external(self, params);
         func(segment)
@@ -436,5 +440,12 @@ impl Drop for Transaction {
     }
 }
 
+impl AsRef<Self> for Transaction {
+    fn as_ref(&self) -> &Self {
+        &self
+    }
+}
+
 unsafe impl Send for Transaction {}
+
 unsafe impl Sync for Transaction {}
