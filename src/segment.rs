@@ -362,8 +362,8 @@ impl<T: AsRef<Transaction> + Clone> ReferencingSegment<T> {
         category: impl AsRef<str>,
         func: F,
     ) -> Result<V>
-        where
-            F: FnOnce(ReferencingSegment<T>) -> V,
+    where
+        F: FnOnce(ReferencingSegment<T>) -> V,
     {
         Ok(func(self.create_custom_nested(name, category)?))
     }
@@ -401,8 +401,8 @@ impl<T: AsRef<Transaction> + Clone> ReferencingSegment<T> {
     /// };
     /// ```
     pub fn datastore_nested<F, V>(&self, params: impl AsRef<DatastoreParams>, func: F) -> Result<V>
-        where
-            F: FnOnce(ReferencingSegment<T>) -> V,
+    where
+        F: FnOnce(ReferencingSegment<T>) -> V,
     {
         Ok(func(self.create_datastore_nested(params)?))
     }
@@ -440,8 +440,8 @@ impl<T: AsRef<Transaction> + Clone> ReferencingSegment<T> {
     /// };
     /// ```
     pub fn external_nested<F, V>(&self, params: impl AsRef<ExternalParams>, func: F) -> Result<V>
-        where
-            F: FnOnce(ReferencingSegment<T>) -> V,
+    where
+        F: FnOnce(ReferencingSegment<T>) -> V,
     {
         Ok(func(self.create_external_nested(params)?))
     }
@@ -710,8 +710,8 @@ impl<'a> Segment<'a> {
     /// });
     /// ```
     pub fn custom_nested<F, V>(&self, name: &str, category: &str, func: F) -> V
-        where
-            F: FnOnce(Segment) -> V,
+    where
+        F: FnOnce(Segment) -> V,
     {
         func(self.create_custom_nested(name, category))
     }
@@ -747,8 +747,8 @@ impl<'a> Segment<'a> {
     /// });
     /// ```
     pub fn datastore_nested<F, V>(&self, params: &DatastoreParams, func: F) -> V
-        where
-            F: FnOnce(Segment) -> V,
+    where
+        F: FnOnce(Segment) -> V,
     {
         func(self.create_datastore_nested(params))
     }
@@ -784,8 +784,8 @@ impl<'a> Segment<'a> {
     /// });
     /// ```
     pub fn external_nested<F, V>(&self, params: &ExternalParams, func: F) -> V
-        where
-            F: FnOnce(Segment) -> V,
+    where
+        F: FnOnce(Segment) -> V,
     {
         func(self.create_external_nested(params))
     }
