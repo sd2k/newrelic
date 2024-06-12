@@ -235,7 +235,8 @@ impl<T: AsRef<Transaction> + Clone> ReferencingSegment<T> {
     ///     .web_transaction("Test transaction")
     ///     .expect("Could not start transaction");
     /// {
-    ///     let _ = ReferencingSegment::custom("Test segment", "Test category", &transaction);
+    ///     let _ = ReferencingSegment::custom(&transaction, "Test segment", "Test category")
+    ///         .expect("Could not start segment");
     ///     thread::sleep(Duration::from_secs(1))
     /// }
     /// ```
@@ -273,7 +274,8 @@ impl<T: AsRef<Transaction> + Clone> ReferencingSegment<T> {
     ///     .build()
     ///     .expect("Invalid datastore segment parameters");
     /// {
-    ///     let _ = ReferencingSegment::datastore(&segment_params, &transaction);
+    ///     let _ = ReferencingSegment::datastore(&transaction, &segment_params)
+    ///         .expect("Could not start segment");
     ///     thread::sleep(Duration::from_secs(1))
     /// }
     /// ```
@@ -307,7 +309,8 @@ impl<T: AsRef<Transaction> + Clone> ReferencingSegment<T> {
     ///     .build()
     ///     .expect("Invalid external segment parameters");
     /// {
-    ///     let _ = ReferencingSegment::external(&segment_params, &transaction);
+    ///     let _ = ReferencingSegment::external(&transaction, &segment_params)
+    ///         .expect("Could not start segment");
     ///     thread::sleep(Duration::from_secs(1))
     /// }
     /// ```
@@ -339,16 +342,17 @@ impl<T: AsRef<Transaction> + Clone> ReferencingSegment<T> {
     ///     .web_transaction("Transaction name")
     ///     .expect("Could not start transaction");
     /// let value = {
-    ///     let s = ReferencingSegment::custom("Segment name", "Segment category", &transaction);
+    ///     let s = ReferencingSegment::custom(&transaction, "Segment name", "Segment category")
+    ///         .expect("Could not start segment");
     ///     thread::sleep(Duration::from_secs(1));
     ///     let expensive_val_1 = s.custom_nested("First nested segment", "Nested category", |_| {
     ///         thread::sleep(Duration::from_secs(1));
     ///         3
-    ///     });
+    ///     }).expect("Could not start nested segment");
     ///     let expensive_val_2 = s.custom_nested("Second nested segment", "Nested category", |_| {
     ///         thread::sleep(Duration::from_secs(1));
     ///         2
-    ///     });
+    ///     }).expect("Could not start nested segment");
     ///     expensive_val_1 * expensive_val_2
     /// };
     /// ```
@@ -358,8 +362,8 @@ impl<T: AsRef<Transaction> + Clone> ReferencingSegment<T> {
         category: impl AsRef<str>,
         func: F,
     ) -> Result<V>
-    where
-        F: FnOnce(ReferencingSegment<T>) -> V,
+        where
+            F: FnOnce(ReferencingSegment<T>) -> V,
     {
         Ok(func(self.create_custom_nested(name, category)?))
     }
@@ -381,7 +385,8 @@ impl<T: AsRef<Transaction> + Clone> ReferencingSegment<T> {
     ///     .web_transaction("Transaction name")
     ///     .expect("Could not start transaction");
     /// let value = {
-    ///     let s = ReferencingSegment::custom("Segment name", "Segment category", &transaction);
+    ///     let s = ReferencingSegment::custom(&transaction, "Segment name", "Segment category")
+    ///         .expect("Could not start segment");
     ///     thread::sleep(Duration::from_secs(1));
     ///     let datastore_segment_params = DatastoreParamsBuilder::new(Datastore::Postgres)
     ///         .collection("people")
@@ -391,13 +396,13 @@ impl<T: AsRef<Transaction> + Clone> ReferencingSegment<T> {
     ///     let expensive_val = s.datastore_nested(&datastore_segment_params, |_| {
     ///         thread::sleep(Duration::from_secs(1));
     ///         3
-    ///     });
+    ///     }).expect("Could not start nested segment");
     ///     expensive_val * 2
     /// };
     /// ```
     pub fn datastore_nested<F, V>(&self, params: impl AsRef<DatastoreParams>, func: F) -> Result<V>
-    where
-        F: FnOnce(ReferencingSegment<T>) -> V,
+        where
+            F: FnOnce(ReferencingSegment<T>) -> V,
     {
         Ok(func(self.create_datastore_nested(params)?))
     }
@@ -419,7 +424,8 @@ impl<T: AsRef<Transaction> + Clone> ReferencingSegment<T> {
     ///     .web_transaction("Transaction name")
     ///     .expect("Could not start transaction");
     /// let value = {
-    ///     let s = ReferencingSegment.custom("Segment name", "Segment category", &transaction);
+    ///     let s = ReferencingSegment::custom(&transaction, "Segment name", "Segment category")
+    ///         .expect("Could not start segment");
     ///     thread::sleep(Duration::from_secs(1));
     ///     let external_segment_params = ExternalParamsBuilder::new("https://www.rust-lang.org/")
     ///         .procedure("GET")
@@ -429,13 +435,13 @@ impl<T: AsRef<Transaction> + Clone> ReferencingSegment<T> {
     ///     let expensive_val = s.external_nested(&external_segment_params, |_| {
     ///         thread::sleep(Duration::from_secs(1));
     ///         3
-    ///     });
+    ///     }).expect("Could not start nested segment");
     ///     expensive_val * 2
     /// };
     /// ```
     pub fn external_nested<F, V>(&self, params: impl AsRef<ExternalParams>, func: F) -> Result<V>
-    where
-        F: FnOnce(ReferencingSegment<T>) -> V,
+        where
+            F: FnOnce(ReferencingSegment<T>) -> V,
     {
         Ok(func(self.create_external_nested(params)?))
     }
@@ -460,7 +466,8 @@ impl<T: AsRef<Transaction> + Clone> ReferencingSegment<T> {
     ///     .web_transaction("Transaction name")
     ///     .expect("Could not start transaction");
     /// let value = {
-    ///     let s = ReferencingSegment::custom("Segment name", "Segment category", &transaction);
+    ///     let s = ReferencingSegment::custom(&transaction, "Segment name", "Segment category")
+    ///         .expect("Could not start segment");
     ///     thread::sleep(Duration::from_secs(1));
     ///     let _ = s.create_custom_nested("Second nested segment", "Nested category")
     ///         .expect("Could not start nested segment");
@@ -501,7 +508,8 @@ impl<T: AsRef<Transaction> + Clone> ReferencingSegment<T> {
     ///     .web_transaction("Transaction name")
     ///     .expect("Could not start transaction");
     /// let value = {
-    ///     let s = ReferencingSegment::custom("Segment name", "Segment category", &transaction);
+    ///     let s = ReferencingSegment::custom(&transaction, "Segment name", "Segment category")
+    ///         .expect("Could not start segment");
     ///     thread::sleep(Duration::from_secs(1));
     ///     let datastore_segment_params = DatastoreParamsBuilder::new(Datastore::Postgres)
     ///         .collection("people")
@@ -541,7 +549,8 @@ impl<T: AsRef<Transaction> + Clone> ReferencingSegment<T> {
     ///     .web_transaction("Transaction name")
     ///     .expect("Could not start transaction");
     /// let value = {
-    ///     let s = ReferencingSegment::custom("Segment name", "Segment category", &transaction);
+    ///     let s = ReferencingSegment::custom(&transaction, "Segment name", "Segment category")
+    ///         .expect("Could not start segment");
     ///     thread::sleep(Duration::from_secs(1));
     ///     let external_segment_params = ExternalParamsBuilder::new("https://www.rust-lang.org/")
     ///         .procedure("GET")
@@ -599,7 +608,8 @@ impl<T: AsRef<Transaction> + Clone> ReferencingSegment<T> {
     ///     .build()
     ///     .expect("Invalid external segment parameters");
     /// {
-    ///     let segment = ReferencingSegment::external(&segment_params, &transaction);
+    ///     let segment = ReferencingSegment::external(&transaction, &segment_params)
+    ///         .expect("Could not start segment");
     ///     let _header = segment.distributed_trace();
     ///     thread::sleep(Duration::from_secs(1))
     /// }
@@ -700,8 +710,8 @@ impl<'a> Segment<'a> {
     /// });
     /// ```
     pub fn custom_nested<F, V>(&self, name: &str, category: &str, func: F) -> V
-    where
-        F: FnOnce(Segment) -> V,
+        where
+            F: FnOnce(Segment) -> V,
     {
         func(self.create_custom_nested(name, category))
     }
@@ -737,8 +747,8 @@ impl<'a> Segment<'a> {
     /// });
     /// ```
     pub fn datastore_nested<F, V>(&self, params: &DatastoreParams, func: F) -> V
-    where
-        F: FnOnce(Segment) -> V,
+        where
+            F: FnOnce(Segment) -> V,
     {
         func(self.create_datastore_nested(params))
     }
@@ -774,8 +784,8 @@ impl<'a> Segment<'a> {
     /// });
     /// ```
     pub fn external_nested<F, V>(&self, params: &ExternalParams, func: F) -> V
-    where
-        F: FnOnce(Segment) -> V,
+        where
+            F: FnOnce(Segment) -> V,
     {
         func(self.create_external_nested(params))
     }
@@ -801,9 +811,16 @@ impl<'a> Segment<'a> {
     ///     .expect("Could not start transaction");
     /// let value = transaction.custom_segment("Segment name", "Segment category", |s| {
     ///     thread::sleep(Duration::from_secs(1));
-    ///     let _ = s.create_custom_nested("Second nested segment", "Nested category")
-    ///         .expect("Could not start nested segment");
-    ///     thread::sleep(Duration::from_secs(1));
+    ///     let expensive_val_1 = s.custom_nested("First nested segment", "Nested category", |_| {
+    ///         thread::sleep(Duration::from_secs(1));
+    ///         3
+    ///     });
+    ///     let expensive_val_2 = s.custom_nested("Second nested segment", "Nested category", |_| {
+    ///         thread::sleep(Duration::from_secs(1));
+    ///         2
+    ///     });
+    ///     expensive_val_1 * expensive_val_2
+    /// });
     /// ```
     pub fn create_custom_nested(&self, name: &str, category: &str) -> Self {
         // We can only create a nested segment if this segment is 'real'
@@ -837,8 +854,7 @@ impl<'a> Segment<'a> {
     ///         .operation("select")
     ///         .build()
     ///         .expect("Invalid datastore segment parameters");
-    ///     let _ = s.create_datastore_nested(&datastore_segment_params)
-    ///         .expect("Could not start nested segment");
+    ///     let _ = s.create_datastore_nested(&datastore_segment_params);
     ///     thread::sleep(Duration::from_secs(1));
     /// });
     /// ```
@@ -874,8 +890,7 @@ impl<'a> Segment<'a> {
     ///         .library("reqwest")
     ///         .build()
     ///         .expect("Invalid external segment parameters");
-    ///     let _ = s.create_external_nested(&external_segment_params)
-    ///         .expect("Could not start nested segment");
+    ///     let _ = s.create_external_nested(&external_segment_params);
     ///     thread::sleep(Duration::from_secs(1));
     /// });
     /// ```
