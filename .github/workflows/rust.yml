@@ -1,18 +1,9 @@
 name: Rust
 
-<<<<<<< Updated upstream
-on: [push]
-||||||| Stash base
-on:
-  push:
-    branches: [main]
-  pull_request:
-=======
 on:
   push:
     branches: [main, master]
   pull_request:
->>>>>>> Stashed changes
 
 jobs:
   build:
